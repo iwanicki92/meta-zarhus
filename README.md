@@ -154,3 +154,11 @@ and you should see output similar to this (the exact size number may differ):
   ```
 
 * Boot the platform
+
+## Release process
+
+The release process is described [here][zarhus-release-process]. Mind that in
+step 2 you have to bump `DISTRO_VERSION` in
+`meta-zarhus-distro/conf/distro/include/zarhus-distro-common.conf`.
+
+[zarhus-release-process]: https://docs.zarhus.com/development-process/standard-release-process
