@@ -36,13 +36,25 @@ script downloaded and available in [PATH](https://en.wikipedia.org/wiki/PATH_(va
 
 Depending on which features you want to have in your build, pass the desired
 `.yml` files via command line. You can read more on that in
-[kas documentation](https://kas.readthedocs.io/en/latest/userguide/project-configuration.html#including-configuration-files-via-the-command-line)
+[kas documentation.](https://kas.readthedocs.io/en/latest/userguide/project-configuration.html#including-configuration-files-via-the-command-line)
 
-* From `yocto` directory run:
+Then check BSP layers for available target platform (target platforms configs
+are located in `conf/machine` directory of every BSP layer) and choose one.
+Then, from `yocto` directory run:
 
-  ```shell
-  SHELL=/bin/bash kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/rockchip.yml
-  ```
+```shell
+SHELL=/bin/bash KAS_MACHINE=<TARGET_NAME> kas-container build <KAS_FILES>
+```
+
+> Note: replace `<TARGET_NAME>` with the name of the chosen target
+> configuration file, and `<KAS_FILES>` with a list of kas files, separated by
+> `:`.
+
+For example:
+
+```shell
+SHELL=/bin/bash KAS_MACHINE=orangepi-cm4 kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/rockchip.yml
+```
 
 * Image build takes time, so be patient and after build's finish you should see
 something similar to (the exact tasks numbers may differ):
