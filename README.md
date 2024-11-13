@@ -36,13 +36,25 @@ script downloaded and available in [PATH](https://en.wikipedia.org/wiki/PATH_(va
 
 Depending on which features you want to have in your build, pass the desired
 `.yml` files via command line. You can read more on that in
-[kas documentation](https://kas.readthedocs.io/en/latest/userguide/project-configuration.html#including-configuration-files-via-the-command-line)
+[kas documentation.](https://kas.readthedocs.io/en/latest/userguide/project-configuration.html#including-configuration-files-via-the-command-line)
 
-* From `yocto` directory run:
+Then check BSP layers for available target platform (target platforms configs
+are located in `conf/machine` directory of every BSP layer) and choose one.
+Then, from `yocto` directory run:
 
-  ```shell
-  SHELL=/bin/bash kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/rockchip.yml
-  ```
+```shell
+SHELL=/bin/bash KAS_MACHINE=<TARGET_NAME> kas-container build <KAS_FILES>
+```
+
+> Note: replace `<TARGET_NAME>` with the name of the chosen target
+> configuration file, and `<KAS_FILES>` with a list of kas files, separated by
+> `:`.
+
+For example:
+
+```shell
+SHELL=/bin/bash KAS_MACHINE=orangepi-cm4 kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/rockchip.yml
+```
 
 * Image build takes time, so be patient and after build's finish you should see
 something similar to (the exact tasks numbers may differ):
@@ -135,18 +147,18 @@ This section assumes that image can be flashed on SD card.
 * From where you ran image build type:
 
   ```shell
-  $ cd build/tmp/deploy/images/zarhus-machine-cm3
+  $ cd build/tmp/deploy/images/orangepi-cm4
   $ sudo umount /dev/sdx*
-  $ sudo bmaptool copy zarhus-base-image-zarhus-machine-cm3.wic.gz /dev/sdx
+  $ sudo bmaptool copy zarhus-base-image-orangepi-cm4.wic.gz /dev/sdx
   ```
 
 and you should see output similar to this (the exact size number may differ):
 
   ```shell
-  zarhus-base-image-zarhus-machine-cm3.wic.bmap zarhus-base-image-zarhus-machine-cm3.wic.gz /dev/sdx
+  zarhus-base-image-orangepi-cm4.wic.bmap zarhus-base-image-orangepi-cm4.wic.gz /dev/sdx
   bmaptool: info: block map format version 2.0
   bmaptool: info: 74650 blocks of size 4096 (291.6 MiB), mapped 42052 blocks (164.3 MiB or 56.3%)
-  bmaptool: info: copying image 'zarhus-base-image-zarhus-machine-cm3.wic.gz' to block device '/dev/sdx' using bmap file 'zarhus-base-image-zarhus-machine-cm3.wic.bmap'
+  bmaptool: info: copying image 'zarhus-base-image-orangepi-cm4.wic.gz' to block device '/dev/sdx' using bmap file 'zarhus-base-image-orangepi-cm4.wic.bmap'
   bmaptool: WARNING: failed to enable I/O optimization, expect suboptimal speed (reason: cannot switch to the 'noop' I/O scheduler: [Errno 22] Invalid argument)
   bmaptool: info: 100% copied
   bmaptool: info: synchronizing '/dev/sdx'
