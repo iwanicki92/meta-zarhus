@@ -29,4 +29,3 @@ do_configure:append() {
 }
 
 COMPATIBLE_MACHINE:orangepi-cm4 = "orangepi-cm4"
-COMPATIBLE_MACHINE:zarhus-machine-cm3 = "zarhus-machine-cm3"
