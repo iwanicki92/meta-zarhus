@@ -166,3 +166,15 @@ and you should see output similar to this (the exact size number may differ):
   ```
 
 * Boot the platform
+
+## Release process
+
+The release process is described [here][zarhus-release-process]. Mind that in
+step 2 you have to bump `DISTRO_VERSION` in
+`meta-zarhus-distro/conf/distro/include/zarhus-distro-common.conf`.
+
+When generating the changelog, you can provide your GitHub access token as a
+parameter to `generate-changelog.sh`. This will disable the API call limit,
+which may otherwise prevent you from running `git cliff`.
+
+[zarhus-release-process]: https://docs.zarhus.com/development-process/standard-release-process
