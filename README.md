@@ -66,6 +66,14 @@ something similar to (the exact tasks numbers may differ):
   NOTE: Tasks Summary: Attempted 2532 tasks of which 2524 didn't need to be rerun and all succeeded.
   ```
 
+* In order to build an image for the Raspberry Pi 4, use this command:
+
+  ```shell
+  SHELL=/bin/bash kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/rpi4.yml
+  # Or for production image: kas/prod-rpi4.yml
+  # For debug image: kas/debug-rpi4.yml
+  ```
+
 ### Private git repositories
 
 When fetching from private repositories is needed (either during the layers
