@@ -69,9 +69,7 @@ something similar to (the exact tasks numbers may differ):
 * In order to build an image for the Raspberry Pi 4, use this command:
 
   ```shell
-  SHELL=/bin/bash kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/rpi4.yml
-  # Or for production image: kas/prod-rpi4.yml
-  # For debug image: kas/debug-rpi4.yml
+  SHELL=/bin/bash KAS_MACHINE=raspberrypi4 kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/debug.yml:meta-zarhus/kas/rpi.yml
   ```
 
 ### Private git repositories
