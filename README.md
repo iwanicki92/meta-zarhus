@@ -66,11 +66,10 @@ something similar to (the exact tasks numbers may differ):
   NOTE: Tasks Summary: Attempted 2532 tasks of which 2524 didn't need to be rerun and all succeeded.
   ```
 
-* In order to build an image for the Raspberry Pi 4, use this command:
+More info about building is available here:
 
-  ```shell
-  SHELL=/bin/bash KAS_MACHINE=raspberrypi4 kas-container build meta-zarhus/kas/common.yml:meta-zarhus/kas/debug.yml:meta-zarhus/kas/rpi.yml
-  ```
+* [https://docs.zarhus.com/getting-started/building/](https://docs.zarhus.com/getting-started/building/)
+* [https://docs.zarhus.com/supported-targets/targets/](https://docs.zarhus.com/supported-targets/targets/)
 
 ### Private git repositories
 
