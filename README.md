@@ -68,8 +68,8 @@ something similar to (the exact tasks numbers may differ):
 
 More info about building is available here:
 
-* [https://docs.zarhus.com/getting-started/building/](https://docs.zarhus.com/getting-started/building/)
-* [https://docs.zarhus.com/supported-targets/targets/](https://docs.zarhus.com/supported-targets/targets/)
+* [Zarhus Docs: Building](https://docs.zarhus.com/getting-started/building/)
+* [Zarhus Docs: Targets](https://docs.zarhus.com/supported-targets/targets/)
 
 ### Private git repositories
 
