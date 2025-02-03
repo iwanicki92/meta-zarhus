@@ -66,6 +66,11 @@ something similar to (the exact tasks numbers may differ):
   NOTE: Tasks Summary: Attempted 2532 tasks of which 2524 didn't need to be rerun and all succeeded.
   ```
 
+More info about building is available here:
+
+* [Zarhus Docs: Building](https://docs.zarhus.com/getting-started/building/)
+* [Zarhus Docs: Targets](https://docs.zarhus.com/supported-targets/targets/)
+
 ### Private git repositories
 
 When fetching from private repositories is needed (either during the layers
