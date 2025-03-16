@@ -5,4 +5,4 @@ header:
 repos:
   meta-rust:
     url: https://github.com/meta-rust/meta-rust.git
-    refspec: 8acc1602f0d7ca99fe70c5212c793e70b56cc886
+    commit: 8acc1602f0d7ca99fe70c5212c793e70b56cc886

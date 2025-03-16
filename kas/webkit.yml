@@ -11,4 +11,4 @@ repos:
 
   meta-webkit:
     url: https://github.com/Igalia/meta-webkit.git
-    refspec: 4cbcec7fc12910ec907d4f1529e9593b8f3e9dd4
+    commit: 4cbcec7fc12910ec907d4f1529e9593b8f3e9dd4
