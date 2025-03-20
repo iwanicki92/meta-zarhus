@@ -9,8 +9,8 @@
 ## This class is used by any recipes that are built using
 ## Cargo.
 
-inherit cargo_common_zarhus
-inherit rust-target-config-zarhus
+inherit cargo_common
+inherit rust-target-config
 
 # the binary we will use
 CARGO = "cargo"
@@ -52,11 +52,11 @@ oe_cargo_build () {
 }
 
 do_compile[progress] = "outof:\s+(\d+)/(\d+)"
-cargo_zarhus_do_compile () {
+cargo_do_compile () {
 	oe_cargo_build
 }
 
-cargo_zarhus_do_install () {
+cargo_do_install () {
 	local have_installed=false
 	for tgt in "${B}/target/${CARGO_TARGET_SUBDIR}/"*; do
 		case $tgt in

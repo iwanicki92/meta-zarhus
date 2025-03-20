@@ -4,8 +4,8 @@ SECTION = "devel"
 LICENSE = "(MIT | Apache-2.0) & Unicode-TOU"
 LIC_FILES_CHKSUM = "file://COPYRIGHT;md5=c2cccf560306876da3913d79062a54b9"
 
-inherit rust-zarhus
-inherit cargo_common_zarhus
+inherit rust
+inherit cargo_common
 
 DEPENDS += "file-native python3-native"
 DEPENDS:append:class-native = " rust-llvm-native"
@@ -45,10 +45,10 @@ setup_cargo_environment () {
     # these are build for the same target as the snapshot, e.g.
     # x86_64-unknown-linux-gnu.
     # Later stages are build for the native target (i.e. target.x86_64-linux)
-    cargo_common_zarhus_do_configure
+    cargo_common_do_configure
 }
 
-inherit rust-target-config-zarhus
+inherit rust-target-config
 
 do_rust_setup_snapshot () {
     for installer in "${WORKDIR}/rust-snapshot-components/"*"/install.sh"; do

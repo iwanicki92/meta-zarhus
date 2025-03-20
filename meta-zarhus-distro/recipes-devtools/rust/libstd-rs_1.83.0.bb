@@ -13,7 +13,7 @@ require rust-source.inc
 S = "${RUSTSRC}/library/sysroot"
 
 RUSTLIB_DEP = ""
-inherit cargo_zarhus
+inherit cargo
 
 CVE_PRODUCT = "rust"
 

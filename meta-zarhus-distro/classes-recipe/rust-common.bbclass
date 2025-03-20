@@ -5,7 +5,7 @@
 #
 
 inherit python3native
-inherit rust-target-config-zarhus
+inherit rust-target-config
 
 # Common variables used by all Rust builds
 export rustlibdir = "${libdir}/rustlib/${RUST_HOST_SYS}/lib"

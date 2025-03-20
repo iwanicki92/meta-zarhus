@@ -9,7 +9,7 @@ SRC_URI = "crate://crates.io/cargo-c/${PV};name=cargo-c"
 SRC_URI[cargo-c.sha256sum] = "ec77e3635cdb0d211f88f22d0460eef0ba031eb616ded57f2ffb98a90365c445"
 S = "${CARGO_VENDORING_DIRECTORY}/cargo-c-${PV}"
 
-inherit cargo_zarhus cargo-update-recipe-crates-zarhus pkgconfig native
+inherit cargo cargo-update-recipe-crates pkgconfig native
 
 DEPENDS = "openssl curl"
 

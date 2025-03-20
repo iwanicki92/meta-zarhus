@@ -15,7 +15,7 @@
 ##
 
 # add crate fetch support
-inherit rust-common-zarhus
+inherit rust-common
 
 # Where we download our registry and dependencies to
 export CARGO_HOME = "${WORKDIR}/cargo_home"
@@ -44,7 +44,7 @@ CARGO_MANIFEST_PATH ??= "${S}/${CARGO_SRC_DIR}/Cargo.toml"
 CARGO_LOCK_PATH ??= "${@ os.path.join(os.path.dirname(d.getVar('CARGO_MANIFEST_PATH')), 'Cargo.lock')}"
 
 CARGO_RUST_TARGET_CCLD ??= "${RUST_TARGET_CCLD}"
-cargo_common_zarhus_do_configure () {
+cargo_common_do_configure () {
 	mkdir -p ${CARGO_HOME}/bitbake
 
 	cat <<- EOF > ${CARGO_HOME}/config.toml
@@ -126,7 +126,7 @@ cargo_common_zarhus_do_configure () {
 	EOF
 }
 
-python cargo_common_zarhus_do_patch_paths() {
+python cargo_common_do_patch_paths() {
     import shutil
 
     cargo_config = os.path.join(d.getVar("CARGO_HOME"), "config.toml")
@@ -197,7 +197,7 @@ python cargo_common_zarhus_do_patch_paths() {
     with open(lockfile, "w") as f:
         f.writelines(newlines)
 }
-do_configure[postfuncs] += "cargo_common_zarhus_do_patch_paths"
+do_configure[postfuncs] += "cargo_common_do_patch_paths"
 
 do_compile:prepend () {
         oe_cargo_fix_env
