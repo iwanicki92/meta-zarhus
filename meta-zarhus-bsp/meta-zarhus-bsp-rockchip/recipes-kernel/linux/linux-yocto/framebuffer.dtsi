@@ -1,0 +1,29 @@
+/ {
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		fb_mem: framebuffer@FRAMEBUFFER_ADDR {
+			compatible = "framebuffer";
+			reg = <0x0 FRAMEBUFFER_ADDR 0x0 FRAMEBUFFER_MEM_SIZE>;
+			no-map;
+		};
+	};
+};
+
+&chosen {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	ranges;
+
+	framebuffer@FRAMEBUFFER_ADDR {
+		compatible = "simple-framebuffer";
+		reg = <0x0 FRAMEBUFFER_ADDR 0x0 (FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT * FRAMEBUFFER_DEPTH)>;
+		width = <FRAMEBUFFER_WIDTH>;
+		height = <FRAMEBUFFER_HEIGHT>;
+		stride = <(FRAMEBUFFER_WIDTH * FRAMEBUFFER_DEPTH)>;
+		format = "a8r8g8b8";
+		memory-region = <&fb_mem>;
+	};
+};
