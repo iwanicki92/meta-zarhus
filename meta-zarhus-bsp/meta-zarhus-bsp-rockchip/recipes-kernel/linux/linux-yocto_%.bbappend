@@ -15,11 +15,12 @@ SRC_URI:append = " \
     file://disable-nfs.cfg \
     file://enable-cmdline-bool.cfg \
     file://enable-debug-stackoverflow.cfg \
-"
-
-SRC_URI:append = " \
     file://rk3566-orangepi-cm4.dtsi \
     file://rk3566-orangepi-cm4-base.dts \
+"
+
+SRC_URI:append:quartz64-a = " \
+    file://quartz64a-eth-enable.cfg \
 "
 
 do_configure:append() {
@@ -29,3 +30,4 @@ do_configure:append() {
 }
 
 COMPATIBLE_MACHINE:orangepi-cm4 = "orangepi-cm4"
+COMPATIBLE_MACHINE:quartz64-a = "quartz64-a"
