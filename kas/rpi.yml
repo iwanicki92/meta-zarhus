@@ -13,3 +13,4 @@ local_conf_header:
     SERIAL_CONSOLE = "115200 ttyAMA0"
     RPI_EXTRA_CONFIG = "enable_uart=1"
     LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"
+    KERNEL_IMAGETYPES = "Image"
