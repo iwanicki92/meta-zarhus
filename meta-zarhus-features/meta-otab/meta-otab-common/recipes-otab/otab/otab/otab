@@ -143,7 +143,7 @@ updateConfirm() {
   if fw_printenv otab_status | grep in_progress; then
       _otab_part_current=$(fw_printenv otab_part_current | sed 's/.*\(.\)/\1/')
 
-      echo "Update trasaction is in progress..."
+      echo "Update transaction is in progress..."
       echo "Checking for OTAB_HEALTHCHECK variable..."
       if [ -n "$OTAB_HEALTHCHECK" ]; then
         echo "OTAB_HEALTHCHECK found: $OTAB_HEALTHCHECK"
@@ -153,7 +153,7 @@ updateConfirm() {
           echo "The new OS will NOT get accepted"
           restartSystem
         fi
-        echo "Custom healthcheck suceeded"
+        echo "Custom healthcheck succeeded"
       else
         echo "OTAB_HEALTHECK is empty. No additional healthcheck is performed."
         echo "We will simply check whether the updated OS has booted correctly."
@@ -165,7 +165,7 @@ updateConfirm() {
 
       echo "Success"
   else
-    echo "No update trasaction. Skipping confirmation."
+    echo "No update transaction. Skipping confirmation."
   fi
 }
 
@@ -188,8 +188,8 @@ rollback() {
   fw_setenv otab_part_next "$_otab_part_next"
 
   echo "Success"
-  echo "Partition: $_otab_part_next was selected as actve for the next boot"
-  echo "If boot suceeds, it will be marked as the default one"
+  echo "Partition: $_otab_part_next was selected as active for the next boot"
+  echo "If boot succeeds, it will be marked as the default one"
   echo "Otherwise, we will go back to this one"
 
 }

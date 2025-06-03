@@ -1,10 +1,12 @@
-DESCRIPTION = "Wrapper for grub-editenv which mimics fw_printenv and \
-fw_setenv utilites from U-Boot"
-
+SUMMARY = "Wrapper for grub-editenv"
+DESCRIPTION = " \
+    Wrapper for grub-editenv which mimics fw_printenv and \
+    fw_setenv utilities from U-Boot \
+"
+HOMEPAGE = "https://docs.zarhus.com"
 LICENSE = "CLOSED"
 
 SRC_URI = "file://fw_printenv"
-
 RDEPENDS:${PN} = "grub-editenv"
 
 do_install() {

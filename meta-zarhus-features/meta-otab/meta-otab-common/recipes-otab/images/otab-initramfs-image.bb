@@ -1,19 +1,22 @@
-# Simple initramfs image. Mostly used for live images.
-DESCRIPTION = "Small image capable of booting a device. The kernel includes \
-the Minimal RAM-based Initial Root Filesystem (initramfs), which finds the \
-first 'init' program more efficiently."
+SUMMARY = "Simple initramfs image. Mostly used for live images."
+DESCRIPTION = " \
+    Small image capable of booting a device. The kernel includes \
+    the Minimal RAM-based Initial Root Filesystem (initramfs), which finds \
+    the first 'init' program more efficiently. \
+"
+HOMEPAGE = "https://docs.zarhus.com"
 
 INITRAMFS_SCRIPTS ?= "\
-   initramfs-framework-base \
-   initramfs-module-udev \
+    initramfs-framework-base \
+    initramfs-module-udev \
 "
 
 PACKAGE_INSTALL = "\
-  ${INITRAMFS_SCRIPTS} \
-  ${VIRTUAL-RUNTIME_base-utils} \
-  udev \
-  base-passwd \
-  ${ROOTFS_BOOTSTRAP_INSTALL} \
+    ${INITRAMFS_SCRIPTS} \
+    ${VIRTUAL-RUNTIME_base-utils} \
+    udev \
+    base-passwd \
+    ${ROOTFS_BOOTSTRAP_INSTALL} \
 "
 
 # Do not pollute the initrd image with rootfs features

@@ -22,7 +22,8 @@ function die {
 
 # Function to generate the OpenSSL certificate
 function generate_certificate {
-    local hostname="$(hostname)"
+    local hostname
+    hostname="$(hostname)"
     echo "Generating OpenSSL certificate for hostname: $hostname..."
     openssl req -x509 -newkey rsa:4096 \
       -keyout "$1/key.pem" \

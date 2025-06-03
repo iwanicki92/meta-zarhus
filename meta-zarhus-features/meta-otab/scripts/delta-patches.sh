@@ -37,7 +37,7 @@ if [ ! -z "$TARGET" ]; then
 
     PROD_IMG="$TARGET-$PROD_IMG_SUFF-$MACHINE"
     DBG_IMG="$TARGET-$DBG_IMG_SUFF-$MACHINE"
-    KERNEL_TYPE="$(basename $(find $DEPLOY_DIR -name "*initramfs-$MACHINE.bin") | cut -d '-' -f 1)"
+    KERNEL_TYPE="$(basename "$(find "$DEPLOY_DIR" -name "*initramfs-$MACHINE.bin")" | cut -d '-' -f 1)"
     KERNEL_FILE="$KERNEL_TYPE-initramfs-$MACHINE.bin"
     ARTIFACTS_DIR="$ROOT_DIR/artifacts/delta-patches/$OPT"
 fi
@@ -143,6 +143,7 @@ prepareNeededRootfs() {
     errorCheck "Decompressing rootfs images failed."
     # create list of base versions, sort names in alphabetical order and
     # get only version part of the name
+    # shellcheck disable=SC2010
     ls -1 | grep -o "$VERSION_REGEXP" > $VERSION_LIST
     popd || exit
 }
@@ -154,7 +155,8 @@ createDeltas() {
     local _updFiles="$SW_DESC_FILE $OTAB_SHELL $_deltaImg.gz $KERNEL_FILE"
     local _ver=""
     local _swu_entry=""
-    local _new_ver=$(grep DISTRO_VERSION "$DISTRO_FILE" | grep -o "$VERSION_REGEXP")
+    local _new_ver
+    _new_ver=$(grep DISTRO_VERSION "$DISTRO_FILE" | grep -o "$VERSION_REGEXP")
     echo "Preparing delta patches..."
     mkdir -p "$TMP_DIR" "$ARTIFACTS_DIR"
     _img=""
@@ -212,4 +214,3 @@ case "$CMD" in
         echo "Invalid COMMAND: \"$CMD\""
         printHelp
 esac
-

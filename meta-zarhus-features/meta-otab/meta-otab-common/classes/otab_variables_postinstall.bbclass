@@ -1,4 +1,4 @@
-inherit otab-variables-common
+inherit otab_variables_common
 
 do_insert_otab_variables_postinstall() {
   insert_otab_variables

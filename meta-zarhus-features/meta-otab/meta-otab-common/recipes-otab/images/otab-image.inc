@@ -9,7 +9,7 @@ OTAB_FILES_WITH_VARIABLES = " \
     ${WORKDIR}/otab-shell \
 "
 
-inherit otab-variables-preinstall swupdate
+inherit otab_variables_preinstall swupdate
 
 SRC_URI = " \
     file://sw-description \
@@ -26,7 +26,7 @@ SWUPDATE_IMAGES = "${OTAB_SWUPDATE_IMAGES}"
 
 # Equivalent of:
 # SWUPDATE_IMAGES_FSTYPES[${OTAB_ROOTFS_IMAGE_NAME}] = "${OTAB_ROOTFS_IMAGE_TYPE}"
-# written as Python anynomous function to allow for dynamic
+# written as Python anonymous function to allow for dynamic
 # variable flag setting (OTAB_ROOTFS_IMAGE_NAME expansion as a flag name)
 python () {
   image_name = d.getVar('OTAB_ROOTFS_IMAGE_NAME', True)

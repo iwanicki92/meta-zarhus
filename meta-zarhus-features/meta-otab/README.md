@@ -2,7 +2,7 @@
 
 ## About
 
-This layers contains an implementaion of Over-the-air (OTA) Dual Image (A/B)
+This layers contains an implementation of Over-the-air (OTA) Dual Image (A/B)
 OS update system for Yocto distributions. The implementation is based on the
 [SWUpdate framework](https://sbabic.github.io/swupdate/swupdate.html).
 
@@ -18,16 +18,16 @@ This layer depends on the following layers:
 * `meta-otab-grub` - Layer with support for the `GRUB` bootloader, currently
   `x86-64 UEFI` is supported
 * `meta-otab-uboot` - Layer with support for the `U-Boot` bootlodaer,
-  currently `arm` and `aarch64` platforms are suported.
+  currently `arm` and `aarch64` platforms are supported.
 * `scripts` - Set of useful scripts which can be used with the meta-otab based
   products.
 * `meta-otab-encryption` - Allows for provisioning of encrypted update image.
 * `meta-otab-signed` - Layer providing signed functionality for trusted source
   verification.
 * `meta-otab-https` - Support for updating over HTTPS server. Allows for use of
-  self-signed certificates if neccessary.
+  self-signed certificates if necessary.
 * `meta-otab-rorootfs` - Adds support for readonly rootfs with the OTAB
-  functionality. Currently `Raspberry Pi 3 Model B+` is verified to work
+  functionality. Currently, `Raspberry Pi 3 Model B+` is verified to work
   correctly.
 
 ### Scripts
@@ -160,7 +160,7 @@ Usage: ./https_py_container.sh <port> <certificate> <key> [<server_directory>] [
 To start the script use the `run_${docker_image_name}_image.sh` script that was
 placed in your specified `server_directory`.
 
-For example if we didnt specify `docker_image_name` it will be equal
+For example if we didn't specify `docker_image_name` it will be equal
 to https_py_container
 
 ```shell

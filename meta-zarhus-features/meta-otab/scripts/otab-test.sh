@@ -43,7 +43,8 @@ function scpPut {
 
 getRootLabel() {
     local _root_label=""
-    local _cmdline=$(sshCmd "cat /proc/cmdline")
+    local _cmdline
+    _cmdline=$(sshCmd "cat /proc/cmdline")
     for arg in $_cmdline; do
     	# Set optarg to option parameter, and '' if no parameter was
     	# given
@@ -58,7 +59,8 @@ getRootLabel() {
 
 getRootDevice() {
     local _cmd="mount | grep ' on /media/rfs/ro' | cut -d ' ' -f 1"
-    local _root_device=$(sshCmd "$_cmd")
+    local _root_device
+    _root_device=$(sshCmd "$_cmd")
     echo "$_root_device"
 }
 

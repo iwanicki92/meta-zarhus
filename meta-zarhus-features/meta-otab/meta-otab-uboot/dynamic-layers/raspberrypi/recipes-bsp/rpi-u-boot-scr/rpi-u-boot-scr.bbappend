@@ -2,4 +2,4 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 OTAB_FILES_WITH_VARIABLES = "${WORKDIR}/boot.cmd.in"
 
-inherit otab-variables-preinstall
+inherit otab_variables_preinstall

@@ -1,7 +1,6 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-
-DESCRIPTION = "OTAB update image"
-
+SUMMARY = "OTAB update image"
+DESCRIPTION = "${SUMMARY}"
+HOMEPAGE = "https://docs.zarhus.com"
 LICENSE = "CLOSED"
 
 OTAB_FILES_WITH_VARIABLES = " \
@@ -9,16 +8,16 @@ OTAB_FILES_WITH_VARIABLES = " \
     ${WORKDIR}/otab-shell \
 "
 
-inherit otab-variables-preinstall swupdate
+inherit otab_variables_preinstall swupdate
 
+DEPENDS += " cpio-native openssl openssl-native"
 SRC_URI = " \
     file://sw-description \
     file://otab-shell \
 "
 
-DEPENDS += " cpio-native openssl openssl-native"
-
 # images to build before building swupdate image
+# nooelint: oelint.vars.mispell # codespell:ignore
 IMAGE_DEPENDS = "${OTAB_ROOTFS_IMAGE_NAME}"
 
 # images and files that will be included in the .swu image
@@ -44,8 +43,9 @@ addtask do_encrypt_images after do_unpack do_prepare_recipe_sysroot before do_sw
 
 # Equivalent of:
 # SWUPDATE_IMAGES_FSTYPES[${OTAB_ROOTFS_IMAGE_NAME}] = "${OTAB_ROOTFS_IMAGE_TYPE}"
-# written as Python anynomous function to allow for dynamic
+# written as Python anonymous function to allow for dynamic
 # variable flag setting (OTAB_ROOTFS_IMAGE_NAME expansion as a flag name)
+# nooelint: oelint.task.noanonpython
 python () {
   image_name = d.getVar('OTAB_ROOTFS_IMAGE_NAME', True)
   d.setVarFlag('SWUPDATE_IMAGES_FSTYPES', image_name, ".enc")

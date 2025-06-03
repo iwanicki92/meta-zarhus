@@ -1,14 +1,13 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
+DEPENDS:append:class-target = " ${PN}-native"
 SRC_URI:append = " \
     file://grub.cfg \
-    "
+"
 
 OTAB_FILES_WITH_VARIABLES = "${WORKDIR}/grub.cfg"
 
-inherit otab-variables-preinstall
-
-DEPENDS:append:class-target = " ${PN}-native"
+inherit otab_variables_preinstall
 
 do_deploy:append:class-target() {
     # create empty environment file

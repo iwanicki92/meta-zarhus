@@ -6,7 +6,7 @@ OTAB_FILES_WITH_VARIABLES = "${WORKDIR}/boot.cmd.in"
 
 UBOOT_ENV_SRC:sunxi = "boot.cmd.in"
 
-inherit otab-variables-preinstall
+inherit otab_variables_preinstall
 
 do_compile:append:sunxi() {
     ${B}/tools/mkimage -C none -A arm -T script -d ${WORKDIR}/boot.cmd.in ${WORKDIR}/${UBOOT_ENV_BINARY}
