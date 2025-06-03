@@ -1,0 +1,28 @@
+# if otab_part_default is not defined yet, boot from 2 partition as default
+if env exists otab_part_default; then
+   setenv otab_part_current ${otab_part_default}
+else
+   setenv otab_part_current 2
+fi
+
+# Boot once into new system after update
+if env exists otab_part_next; then
+   setenv otab_part_current ${otab_part_next}
+   setenv otab_part_next
+fi
+
+if test ${otab_part_current} -eq 3; then
+   setenv otab_kernel_image "<OTAB_KERNEL_IMAGE_B>"
+   setenv otab_root_device "<OTAB_LABEL_ROOTFS_B>"
+else
+   setenv otab_kernel_image "<OTAB_KERNEL_IMAGE_A>"
+   setenv otab_root_device "<OTAB_LABEL_ROOTFS_A>"
+fi
+
+saveenv
+
+fdt addr ${fdt_addr} && fdt get value bootargs /chosen bootargs
+setenv bootargs "${bootargs} rootwait rootfstype=ext4 root=LABEL=${otab_root_device}"
+fatload <OTAB_STORAGE_DEVICE> 0:1 ${kernel_addr_r} ${otab_kernel_image}
+if test ! -e <OTAB_STORAGE_DEVICE> 0:1 uboot.env; then saveenv; fi;
+booti ${kernel_addr_r} - ${fdt_addr}

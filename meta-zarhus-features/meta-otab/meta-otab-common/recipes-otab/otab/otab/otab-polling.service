@@ -1,0 +1,10 @@
+[Unit]
+SourcePath=/usr/sbin/otab
+Description=Start polling for updates
+
+[Service]
+ExecStart=/usr/sbin/otab polling prod
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

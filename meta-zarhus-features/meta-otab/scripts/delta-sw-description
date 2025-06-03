@@ -1,0 +1,91 @@
+software =
+{
+	version = "0.4.3";
+
+	hardware-compatibility: [ "1.0" ];
+
+	otab: {
+		a: {
+			scripts: (
+				{
+					filename = "otab-shell";
+					type = "shellscript";
+					data = "rootfsa";
+				}
+			)
+			images: (
+				{
+					type = "rdiff_image";
+					filename = "image.rdiff.delta.gz";
+					installed-directly = true;
+					compressed = true;
+					device = "/otab-device";
+					properties: {
+						rdiffbase = ["/rdiff-otab-device"];
+					};
+				}
+			);
+			files: (
+				{
+					filename = "<PROJECT_KERNEL_FILE>";
+					path = "/boot/<PROJECT_KERNEL_TYPE>-initramfs-a";
+				}
+			);
+			bootenv: (
+				{
+					name = "otab_part_next";
+					value = "2";
+				},
+				{
+					name = "otab_part_default";
+					value = "3";
+				},
+				{
+					name = "otab_status";
+					value = "in_progress";
+				}
+				);
+		};
+		b: {
+			scripts: (
+				{
+					filename = "otab-shell";
+					type = "shellscript";
+					data = "rootfsb";
+				}
+			)
+			images: (
+				{
+					type = "rdiff_image";
+					filename = "image.rdiff.delta.gz";
+					installed-directly = true;
+					compressed = true;
+					device = "/otab-device";
+					properties: {
+						rdiffbase = ["/rdiff-otab-device"];
+					};
+				}
+			);
+			files: (
+				{
+					filename = "<PROJECT_KERNEL_FILE>";
+					path = "/boot/<PROJECT_KERNEL_TYPE>-initramfs-b";
+				}
+			);
+			bootenv: (
+				{
+					name = "otab_part_next";
+					value = "3";
+				},
+				{
+					name = "otab_part_default";
+					value = "2";
+				},
+				{
+					name = "otab_status";
+					value = "in_progress";
+				}
+			);
+		};
+	};
+}

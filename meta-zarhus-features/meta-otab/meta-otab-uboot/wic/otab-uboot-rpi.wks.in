@@ -1,0 +1,8 @@
+# short-description: Create SD card image with dual rootfs for OTAB usage
+# long-description: Creates a partitioned SD card image for use with
+# Raspberry Pi. Boot files are located in the first vfat partition.
+
+part /boot --source bootimg-partition --fstype=vfat --label ${OTAB_LABEL_BOOT}      --align 1024 --fixed-size ${OTAB_BOOT_PART_SIZE}   --active
+part /     --source rootfs --fstype=ext4 --label ${OTAB_LABEL_ROOTFS_A}  --align 1024 --fixed-size ${OTAB_ROOTFS_PART_SIZE} ${OTAB_WIC_ROOTFS_EXTRA_ARGS}
+part       --source rootfs --fstype=ext4 --label ${OTAB_LABEL_ROOTFS_B}  --align 1024 --fixed-size ${OTAB_ROOTFS_PART_SIZE} ${OTAB_WIC_ROOTFS_EXTRA_ARGS}
+part                       --fstype=ext4 --label ${OTAB_LABEL_ROOTFS_OVERLAY} --align 1024 --use-uuid --fixed-size ${OTAB_ROOTFS_OVERLAY_PART_SIZE}
