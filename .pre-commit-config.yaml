@@ -71,7 +71,11 @@ repos:
     hooks:
       - id: namespell
         args: [--fix]
-        exclude: README.md
+        exclude: |
+          (?x)^(
+            README.md|
+            .*/meta-otab-uki/conf/layer.conf
+          )$
 
 ci:
   autoupdate_commit_msg: 'pre-commit: autoupdate hooks'
