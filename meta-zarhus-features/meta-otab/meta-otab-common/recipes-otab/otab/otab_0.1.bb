@@ -9,8 +9,6 @@ SRC_URI = " \
     file://otab-confirm.service \
     file://otab-polling.service \
 "
-# with every build fetch all SRC_URI to detect changes
-do_fetch[nostamp] = "1"
 
 OTAB_FILES_WITH_VARIABLES = "${WORKDIR}/otab-variables"
 
