@@ -15,28 +15,37 @@ IMAGE_BOOT_FILES_label-${OTAB_LABEL_BOOT_B}:append = " \
 def get_second_cmdline(d):
     import re
     cmdline = d.getVar("UKI_CMDLINE")
-    return re.sub("root=.*? ", f"root=LABEL={d.getVar('OTAB_LABEL_ROOTFS_B')} ", cmdline)
+    # ukify will trim multiple whitespace characters into one
+    return " ".join(
+        re.sub(
+            r"root=.*?( |$)", fr"root=LABEL={d.getVar('OTAB_LABEL_ROOTFS_B')} ",
+            cmdline
+        ).split())
 
-# Create second UKI by creating first with longer cmdline and then replacing
-# cmdline in copy with shorter cmdline (as we can't easily resize section)
+# If second cmdline is longer than first then add placeholder to first cmdline
+# so it's at least as long as second one
 python do_uki:prepend() {
-    cmdline = d.getVar('UKI_CMDLINE')
+    import bb
+    # trim multiple whitespaces as that's what ukify does
+    cmdline = " ".join(d.getVar('UKI_CMDLINE').split())
     second_cmdline = get_second_cmdline(d)
-    # use second cmdline if it's longer
     if len(cmdline) < len(second_cmdline):
-        d.setVar('UKI_CMDLINE', second_cmdline)
+        placeholder = "placeholder="
+        missing_length = len(second_cmdline) - len(cmdline) - len(placeholder)
+        placeholder = placeholder + "0"*missing_length
+        cmdline = f"{cmdline} {placeholder}"
+        bb.debug(1, f"{cmdline=}")
+        d.setVar('UKI_CMDLINE', cmdline)
 }
 
+# Copy UKI and replace cmdline. It can't be longer than original that's why we
+# extend cmdline in first UKI if needed.
 python do_second_uki() {
     import bb.process
-    cmdline = d.getVar('UKI_CMDLINE')
     second_cmdline = get_second_cmdline(d)
-    # second UKI will contain smaller of cmdlines or 'second_cmdline' if equal
-    if len(second_cmdline) <= len(cmdline):
-        cmdline = second_cmdline
     cmdline_path = f"{d.getVar('WORKDIR')}/second_cmdline"
     with open(cmdline_path, "w") as file:
-        file.write(cmdline)
+        file.write(second_cmdline)
     deploy_dir = d.getVar('DEPLOY_DIR_IMAGE')
     first_uki = f"{deploy_dir}/{d.getVar('UKI_FILENAME')}"
     second_uki = f"{deploy_dir}/{d.getVar('UKI_FILENAME_B')}"
@@ -44,7 +53,8 @@ python do_second_uki() {
     # replace cmdline section in second UKI
     objcopy_cmd = f"{d.getVar('OBJCOPY')} --update-section .cmdline={cmdline_path} {second_uki}"
     bb.process.run(f"cp {first_uki} {second_uki}", shell=True)
-    bb.debug(f"Creating second uki cmd: {objcopy_cmd}")
+    bb.debug(1, f"Creating second uki cmd: {objcopy_cmd}")
+    bb.debug(1, f"Second cmdline contains: {second_cmdline}")
     bb.process.run(objcopy_cmd, shell=True)
 }
 
