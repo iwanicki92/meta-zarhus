@@ -6,6 +6,10 @@ repos:
   meta-swupdate:
     url: https://github.com/sbabic/meta-swupdate.git
     commit: 43ef322cbf5b91d84b007c343cf73e9b01699594
+    patches:
+      meta-otab:
+        repo: meta-zarhus
+        path: meta-zarhus-features/meta-otab/patches/0001-swupdate-common-add-otab-shell-to-SWU-image.patch
   meta-zarhus:
     layers:
       meta-zarhus-features/meta-otab/meta-otab-common:
