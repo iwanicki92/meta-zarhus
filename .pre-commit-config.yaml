@@ -74,7 +74,7 @@ repos:
         exclude: |
           (?x)^(
             README.md|
-            .*/meta-otab-uki/conf/layer.conf
+            .*/layer.conf
           )$
 
 ci:
