@@ -1,0 +1,7 @@
+---
+header:
+  version: 14
+
+target:
+  - zarhus-base-image-debug
+  - zarhus-swu-image-debug

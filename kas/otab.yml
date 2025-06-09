@@ -2,6 +2,10 @@
 header:
   version: 14
 
+target:
+  - zarhus-base-image
+  - zarhus-swu-image
+
 repos:
   meta-swupdate:
     url: https://github.com/sbabic/meta-swupdate.git

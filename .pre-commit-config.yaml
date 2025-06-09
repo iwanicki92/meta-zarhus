@@ -60,6 +60,10 @@ repos:
         language: python
         language_version: python3
         files: .*\.(bb)|(bbappend)|(bbclass)$
+        exclude: |
+          (?x)^(
+            .*/zarhus-swu-image.*\.bb
+          )$
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -74,7 +78,7 @@ repos:
         exclude: |
           (?x)^(
             README.md|
-            .*/layer.conf
+            .*/layer.conf|
           )$
 
 ci:
