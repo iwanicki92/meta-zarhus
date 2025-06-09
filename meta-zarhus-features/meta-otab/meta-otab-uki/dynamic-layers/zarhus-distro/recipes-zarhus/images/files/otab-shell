@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2020 3mdeb Embedded Systems Consulting <contact@3mdeb.com>
+#
+# SPDX-License-Identifier: MIT
+
+UPDATE_DEV_SYMLINK="/otab-device"
+
+do_preinst()
+{
+    echo "do_preinst"
+    exit 0
+}
+
+do_postinst()
+{
+    echo "do_postinst"
+    if [ -z "$OTAB_LABEL" ]; then
+        echo "OTAB_LABEL not given through the 'data' attribute in sw-description"
+        exit 1
+    fi
+
+    e2label "$UPDATE_DEV_SYMLINK" "$OTAB_LABEL"
+
+    exit 0
+}
+
+case "$1" in
+preinst)
+    echo "call do_preinst"
+    do_preinst
+    ;;
+postinst)
+    # passed through the 'data = ' attribute in sw-description
+    OTAB_LABEL="$2"
+    echo "call do_postinst"
+    do_postinst
+    ;;
+*)
+    echo "default"
+    exit 1
+    ;;
+esac

@@ -4,7 +4,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-source /usr/sbin/otab-variables
+# shellcheck source=otab-variables
+. /usr/sbin/otab-variables
 
 # accept the OTAB_HEALTHCHECK program from environment first
 if [ -z "$OTAB_HEALTHCHECK" ]; then
@@ -255,13 +256,13 @@ updateFromFile() {
     fi
 
     if [ ! -f "$swu_file" ]; then
-        echo "\"$SWU_FILE\" does not exist"
+        echo "\"$swu_file\" does not exist"
         exit 1
     fi
 
     if [ "$COMMAND" = "delta-update" ]; then
         _curr_ver=v$(grep VERSION_ID /etc/os-release | cut -d "=" -f 2)
-        _base_ver=$(echo $swu_file | cut -d "-" -f 4)
+        _base_ver=$(echo "$swu_file" | cut -d "-" -f 4)
         # check of base version is needed here, the swupdate itself will not
         # return an error when the update will be started with the delta file
         # that was created from a different rootfs image than it is running
@@ -276,12 +277,12 @@ updateFromFile() {
     updatePerform "-i ${swu_file}"
 }
 
-function compareVersions {
+compareVersions() {
     # return 1 if ver2 > ver1
     # return 0 otherwise
 
-    local ver1="$1"
-    local ver2="$2"
+    ver1="$1"
+    ver2="$2"
 
     IFS='.' read -r -a arr_ver1 <<< "$ver1"
     IFS='.' read -r -a arr_ver2 <<< "$ver2"
@@ -315,13 +316,13 @@ function compareVersions {
     fi
 }
 
-function checkPollServer {
-    local _serverUrl="$1"
-    local _verFile="current-version.txt"
-    local _latestUrl="$_serverUrl/$_verFile"
-    local _tmpPath="/tmp"
+checkPollServer() {
+    _serverUrl="$1"
+    _verFile="current-version.txt"
+    _latestUrl="$_serverUrl/$_verFile"
+    _tmpPath="/tmp"
 
-    if [[ "$PASSWORD_PROTECTED" == "no" ]]; then
+    if [ "$PASSWORD_PROTECTED" = "no" ]; then
         wget -O "$_tmpPath/$_verFile" "$_latestUrl"
         errorCheck "Failed to download $_latestUrl"
     else
@@ -347,11 +348,11 @@ function checkPollServer {
     fi
 }
 
-function pollServer {
-    local _serverUrl="$1"
-    local _verFile="current-version.txt"
-    local _latestUrl="$_serverUrl/$_verFile"
-    local _tmpPath="/tmp"
+pollServer() {
+    _serverUrl="$1"
+    _verFile="current-version.txt"
+    _latestUrl="$_serverUrl/$_verFile"
+    _tmpPath="/tmp"
 
     if [[ "$PASSWORD_PROTECTED" == "no" ]]; then
         wget -O "$_tmpPath/$_verFile" "$_latestUrl"
@@ -363,22 +364,22 @@ function pollServer {
         popd
     fi
 
-    local _systemVer=$(cat /etc/os-release | grep VERSION_ID | cut -d '=' -f 2 | tr -d '"')
-    local _updateVer=$(cat "$_tmpPath/$_verFile" | grep -m1 VERSION | cut -d '=' -f 2 | tr -d '"')
+    _systemVer=$(cat /etc/os-release | grep VERSION_ID | cut -d '=' -f 2 | tr -d '"')
+    _updateVer=$(cat "$_tmpPath/$_verFile" | grep -m1 VERSION | cut -d '=' -f 2 | tr -d '"')
 
     compareVersions $_systemVer $_updateVer
 
-    local _return=$?
+    _return=$?
 
     if [ "$_return" -eq 1 ]; then
-        local _swuFile=""
-        local _baseSwuFile=$(cat "$_tmpPath/$_verFile" | grep -m1 FILE | cut -d '=' -f 2 | tr -d '"')
+        _swuFile=""
+        _baseSwuFile=$(cat "$_tmpPath/$_verFile" | grep -m1 FILE | cut -d '=' -f 2 | tr -d '"')
         if [[ "$_baseSwuFile" =~ "delta-patch" ]]; then
             _swuFile="$_baseSwuFile-v$_systemVer-v$_updateVer.swu"
         else
             _swuFile="$_baseSwuFile"
         fi
-        local _swuUrl="$_serverUrl/$_swuFile"
+        _swuUrl="$_serverUrl/$_swuFile"
 
         echo "$_updateVer is greater than $_systemVer"
         echo "Download and apply update file"
@@ -394,15 +395,15 @@ function pollServer {
     fi
 }
 
-function pollingLoop {
-    local _serverUrl="$1"
-    local _timeStart=$(date --date="$UPDATE_SLOT_START" +%s)
-    local _timeStop=$(date --date="$UPDATE_SLOT_STOP" +%s)
-    local _timeNow=""
-    local _daysSinceEpoch=0
-    local _rand=""
-    local _canUpdate=0
-    local _updateDay=0
+pollingLoop() {
+    _serverUrl="$1"
+    _timeStart=$(date --date="$UPDATE_SLOT_START" +%s)
+    _timeStop=$(date --date="$UPDATE_SLOT_STOP" +%s)
+    _timeNow=""
+    _daysSinceEpoch=0
+    _rand=""
+    _canUpdate=0
+    _updateDay=0
 
     while :
     do
@@ -429,7 +430,7 @@ function pollingLoop {
             echo "Update should not be executed on this day."
             echo "Next update possibility will be checked in $(expr $UPDATE_DAYS - $_updateDay) days."
             # Sleep until the end of the time slot
-            sleep $(expr $_timeStop - $_timeNow)
+            sleep $((_timeStop - _timeNow))
         fi
     done
 }

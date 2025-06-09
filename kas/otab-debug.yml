@@ -1,6 +1,8 @@
 ---
 header:
   version: 14
+  includes:
+    - kas/otab.yml
 
 target:
   - zarhus-base-image-debug

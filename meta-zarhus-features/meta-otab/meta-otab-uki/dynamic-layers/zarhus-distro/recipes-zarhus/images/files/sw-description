@@ -1,0 +1,93 @@
+software =
+{
+	version = "@@DISTRO_VERSION@@";
+
+	hardware-compatibility: [ "1.0" ];
+
+	otab: {
+		a: {
+			scripts: (
+				{
+					filename = "otab-shell";
+					type = "shellscript";
+					data = "<OTAB_LABEL_ROOTFS_A>";
+					sha256 = "$swupdate_get_sha256(otab-shell)";
+				}
+			)
+			images: (
+				{
+					filename = "<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_BOOT_A_IMAGE_FSTYPE>";
+					sha256 = "$swupdate_get_sha256(<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_BOOT_A_IMAGE_FSTYPE>)";
+					type = "raw";
+					installed-directly = true;
+					compressed = "zlib";
+					device = "/dev/disk/by-label/<OTAB_LABEL_BOOT_A>";
+				},
+				{
+					filename = "<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_ROOTFS_A_IMAGE_FSTYPE>";
+					sha256 = "$swupdate_get_sha256(<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_ROOTFS_A_IMAGE_FSTYPE>)";
+					type = "raw";
+					installed-directly = true;
+					compressed = "zlib";
+					device = "/dev/disk/by-label/<OTAB_LABEL_ROOTFS_A>";
+				}
+			);
+			bootenv: (
+				{
+					name = "otab_part_next";
+					value = "2";
+				},
+				{
+					name = "otab_part_default";
+					value = "3";
+				},
+				{
+					name = "otab_status";
+					value = "in_progress";
+				}
+				);
+		};
+		b: {
+			scripts: (
+				{
+					filename = "otab-shell";
+					type = "shellscript";
+					data = "<OTAB_LABEL_ROOTFS_B>";
+					sha256 = "$swupdate_get_sha256(otab-shell)";
+				}
+			)
+			images: (
+				{
+					filename = "<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_BOOT_B_IMAGE_FSTYPE>";
+					sha256 = "$swupdate_get_sha256(<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_BOOT_B_IMAGE_FSTYPE>)";
+					type = "raw";
+					installed-directly = true;
+					compressed = "zlib";
+					device = "/dev/disk/by-label/<OTAB_LABEL_BOOT_B>";
+				},
+				{
+					filename = "<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_ROOTFS_B_IMAGE_FSTYPE>";
+					sha256 = "$swupdate_get_sha256(<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE><OTAB_ROOTFS_B_IMAGE_FSTYPE>)";
+					type = "raw";
+					installed-directly = true;
+					compressed = "zlib";
+					device = "/dev/disk/by-label/<OTAB_LABEL_ROOTFS_B>";
+				}
+			);
+			bootenv: (
+				{
+					name = "otab_part_next";
+					value = "3";
+				},
+				{
+					name = "otab_part_default";
+					value = "2";
+				},
+				{
+					name = "otab_status";
+					value = "in_progress";
+				}
+			);
+		};
+	};
+}
