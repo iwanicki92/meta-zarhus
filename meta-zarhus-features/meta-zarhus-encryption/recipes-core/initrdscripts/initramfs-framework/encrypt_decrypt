@@ -8,6 +8,24 @@ echo_tty() {
     fi
 }
 
+wait_for_enter() {
+    pids=""
+    ttys="$(grep -oE "console=[^ ,]*" /proc/cmdline | sed 's/console=//g' | sort | uniq)"
+    echo_tty "Press Enter to continue..."
+    for tty in $ttys; do
+        if [ "$tty" != "tty0" ]; then
+            # shellcheck disable=SC3061,SC2162
+            read < "/dev/$tty" & pids="$pids $!"
+        fi
+    done
+    # shellcheck disable=SC3061,SC2162
+    read < "/dev/tty0" & pids="$pids $!"
+    # shellcheck disable=SC3045
+    wait -n
+    # shellcheck disable=SC2086
+    kill $pids 2>/dev/null
+}
+
 error_check() {
     ret=$?
     err_msg="$1"
@@ -45,7 +63,7 @@ encrypt_decrypt_run() {
 
     # if rootfs is already encrypted then only decrypt
     if cryptsetup luksDump "$rd_luks_rootfs" >/dev/null 2>&1; then
-        cryptsetup open --token-only "$rd_luks_rootfs" "$luks_rootfs_label"
+        cryptsetup open "$rd_luks_rootfs" "$luks_rootfs_label"
         error_check "Couldn't decrypt $rd_luks_rootfs"
         return 0
     fi
@@ -70,10 +88,16 @@ encrypt_decrypt_run() {
     error_check "Encryption failed"
     cryptsetup config "$rd_luks_rootfs" --label "$luks_rootfs_label"
 
+    echo_tty "Enrolling recovery key"
+    systemd-cryptenroll --recovery-key --unlock-key-file="$key" \
+        "$rd_luks_rootfs" 2>&1 | echo_tty
+    error_check "Enrolling recovery key failed"
     echo_tty "Enrolling TPM device"
-    systemd-cryptenroll --wipe-slot=all --unlock-key-file="$key" \
-        --tpm2-device=auto --tpm2-pcrs="<PCRS>" "$rd_luks_rootfs"
+    systemd-cryptenroll --wipe-slot=password --unlock-key-file="$key" \
+        --tpm2-device=auto --tpm2-pcrs="<PCRS>" "$rd_luks_rootfs" | echo_tty
     error_check "Enrolling TPM failed"
+    echo_tty "Please save your recovery code. If you don't do it now, you will have to generate a new one manually."
+    wait_for_enter
 
     cryptsetup open --token-only "$rd_luks_rootfs" "$luks_rootfs_label"
     error_check "Couldn't decrypt $rd_luks_rootfs"
