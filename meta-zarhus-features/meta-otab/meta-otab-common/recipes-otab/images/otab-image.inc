@@ -23,6 +23,10 @@ IMAGE_DEPENDS = "${OTAB_ROOTFS_IMAGE_NAME}"
 OTAB_SWUPDATE_IMAGES ?= "${OTAB_ROOTFS_IMAGE_NAME} ${OTAB_KERNEL_IMAGE_TYPE}-${MACHINE}"
 
 SWUPDATE_IMAGES = "${OTAB_SWUPDATE_IMAGES}"
+# Without this otab-shell in swu doesn't have otab_variables_preinstall changes,
+# instead cleanly fetched version is used (but not sw-description for some
+# reason)
+INHIBIT_SWUPDATE_ADD_SRC_URI = "1"
 
 # Equivalent of:
 # SWUPDATE_IMAGES_FSTYPES[${OTAB_ROOTFS_IMAGE_NAME}] = "${OTAB_ROOTFS_IMAGE_TYPE}"
