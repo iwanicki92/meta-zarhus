@@ -23,6 +23,7 @@ insert_otab_variables() {
       sed -e "s@<OTAB_LABEL_ROOTFS_A>@${OTAB_LABEL_ROOTFS_A}@g" -i ${file}
       sed -e "s@<OTAB_LABEL_ROOTFS_B>@${OTAB_LABEL_ROOTFS_B}@g" -i ${file}
       sed -e "s@<OTAB_LABEL_DATA>@${OTAB_LABEL_DATA}@g" -i ${file}
+      sed -e "s@<OTAB_LABEL_ROOTFS_OVERLAY>@${OTAB_LABEL_ROOTFS_OVERLAY}@g" -i ${file}
       sed -e "s@<OTAB_BOOT_PART_SIZE>@${OTAB_BOOT_PART_SIZE}@g" -i ${file}
       sed -e "s@<OTAB_ROOTFS_PART_SIZE>@${OTAB_ROOTFS_PART_SIZE}@g" -i ${file}
       sed -e "s@<OTAB_DATA_PART_SIZE>@${OTAB_DATA_PART_SIZE}@g" -i ${file}
