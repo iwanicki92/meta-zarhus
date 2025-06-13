@@ -21,6 +21,8 @@ do_postinst()
         exit 1
     fi
 
+    e2fsck -fp "$UPDATE_DEV_SYMLINK" >/dev/null 2>&1 && resize2fs "$UPDATE_DEV_SYMLINK" >/dev/null 2>&1
+
     case "$otab_label" in
     "<OTAB_LABEL_ROOTFS_A>")
         next_boot="ZarhusOS A"
