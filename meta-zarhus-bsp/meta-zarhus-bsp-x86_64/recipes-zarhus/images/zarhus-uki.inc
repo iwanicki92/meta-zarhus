@@ -5,7 +5,8 @@ IMAGE_EFI_BOOT_FILES = "${UKI_FILENAME};EFI/BOOT/bootx64.efi"
 IMAGE_BOOT_FILES = "${IMAGE_EFI_BOOT_FILES}"
 
 # Board-specific tweaks
-UKI_CMDLINE:x86-64 = "root=LABEL=${ROOTFS_LABEL} console=ttyS0,115200 quiet"
+CMDLINE_CONSOLE ?= "ttyS0,115200"
+UKI_CMDLINE:x86-64 = "root=LABEL=${ROOTFS_LABEL} console=${CMDLINE_CONSOLE} quiet"
 
 BOOT_UUID = "${@generate_uuid_from_sha(d, 'boot')}"
 ROOT_UUID = "${@generate_uuid_from_sha(d, 'root')}"
