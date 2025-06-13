@@ -1,0 +1,18 @@
+---
+header:
+  version: 11
+
+repos:
+  meta-zarhus:
+    layers:
+      meta-zarhus-bsp/meta-zarhus-bsp-x86_64:
+
+local_conf_header:
+  x86-64: |
+    # Use systemd and EFI, needed by UKI
+    INIT_MANAGER = "systemd"
+    EFI_PROVIDER = "systemd-boot"
+
+    # Build an initramfs that ukify can merge in
+    INITRAMFS_IMAGE = "core-image-minimal-initramfs"
+    WKS_FILE = "zarhus-uki.wks"
