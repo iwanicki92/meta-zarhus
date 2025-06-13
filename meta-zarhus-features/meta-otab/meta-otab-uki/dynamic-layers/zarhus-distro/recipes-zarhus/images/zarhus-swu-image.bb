@@ -21,3 +21,8 @@ python () {
   image_name = d.getVar('OTAB_KERNEL_IMAGE_TYPE', True) + '-' + d.getVar('MACHINE', True)
   d.delVarFlag('SWUPDATE_IMAGES_FSTYPES', image_name)
 }
+
+# So do_insert_otab_variables works on fresh files. Consider changing it so it
+# doesn't modify files in place but creates modified ones, that way we would
+# only have to rerun do_insert_otab_variables
+do_unpack[vardeps] = "IMAGE_BASENAME OTAB_ROOTFS_IMAGE_NAME"
