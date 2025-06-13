@@ -1,37 +1,15 @@
 #!/bin/sh
 
-echo_tty() {
-    if [ -n "$1" ]; then
-        echo "$1" | tee /dev/tty0
-    else
-        tee /dev/tty0
-    fi
-}
-
 wait_for_enter() {
-    pids=""
-    ttys="$(grep -oE "console=[^ ,]*" /proc/cmdline | sed 's/console=//g' | sort | uniq)"
-    echo_tty "Press Enter to continue..."
-    for tty in $ttys; do
-        if [ "$tty" != "tty0" ]; then
-            # shellcheck disable=SC3061,SC2162
-            read < "/dev/$tty" & pids="$pids $!"
-        fi
-    done
-    # shellcheck disable=SC3061,SC2162
-    read < "/dev/tty0" & pids="$pids $!"
-    # shellcheck disable=SC3045
-    wait -n
-    # shellcheck disable=SC2086
-    kill $pids 2>/dev/null
+    echo "Press Enter to continue..."
+    read -r _ignore
 }
 
 error_check() {
     ret=$?
     err_msg="$1"
     if [ $ret != 0 ]; then
-        echo_tty "$err_msg (err=$ret)"
-        fatal ""
+        fatal "$err_msg (err=$ret)"
     fi
 }
 
@@ -45,38 +23,38 @@ encrypt_device() {
     # shellcheck disable=SC3040
     set -o pipefail
 
-    echo_tty "Preparing to encrypt $device_to_encrypt"
-    umount "$device_to_encrypt" 2>/dev/null || true
+    echo "Preparing to encrypt $device_to_encrypt"
+    umount "$device_to_encrypt" 2>/dev/null
     device_size="$(lsblk -nbo SIZE "$device_to_encrypt")"
     e2fsck -fp "$device_to_encrypt" >/dev/null
     # reduce fs size to make space for LUKS2 header
-    resize2fs "$device_to_encrypt" "$(($device_size/1024/1024-32))M" -f
+    resize2fs "$device_to_encrypt" "$(($device_size/1024/1024-32))M" -f >/dev/null
     error_check "Failed to shrink filesystem"
 
-    echo_tty "Encrypting $device_to_encrypt"
+    echo "Encrypting $device_to_encrypt"
     key="tmp_key"
     dd if=/dev/urandom of="$key" bs=512 count=4 2>/dev/null
     chmod 600 "$key"
     echo "YES" | cryptsetup reencrypt \
         --encrypt --type luks2 --key-file "$key" \
-        --reduce-device-size 32M "$device_to_encrypt" | echo_tty
+        --reduce-device-size 32M "$device_to_encrypt"
     error_check "Encryption failed"
     cryptsetup config "$device_to_encrypt" --label "$luks_label"
 
     if [ -n "$RECOVERY_KEY" ]; then
-        echo_tty "Enrolling previously generated recovery key"
+        echo "Enrolling previously generated recovery key"
         cryptsetup luksAddKey --key-file="$key" "$device_to_encrypt" < "$RECOVERY_KEY"
         echo '{"type":"systemd-recovery","keyslots":["1"]}' |
             cryptsetup token import --key-file="$key" "$device_to_encrypt"
         error_check "Enrolling recovery key failed"
     else
-        echo_tty "Enrolling recovery key"
+        echo "Enrolling recovery key"
         RECOVERY_KEY=recovery_key
         systemd-cryptenroll --recovery-key --unlock-key-file="$key" \
             "$device_to_encrypt" >"$RECOVERY_KEY" 2>/dev/null
         error_check "Enrolling recovery key failed"
         # Copy of systemd-cryptenroll output
-        cat <<EOF | echo_tty
+        cat <<EOF
 A secret recovery key has been generated for this volume:
 
     🔐 $(cat "$RECOVERY_KEY")
@@ -88,16 +66,16 @@ whenever authentication is requested.
 EOF
         wait_for_enter
     fi
-    echo_tty "Enrolling TPM device"
+    echo "Enrolling TPM device"
     systemd-cryptenroll --wipe-slot=password --unlock-key-file="$key" \
-        --tpm2-device=auto --tpm2-pcrs="<PCRS>" "$device_to_encrypt" | echo_tty
+        --tpm2-device=auto --tpm2-pcrs="<PCRS>" "$device_to_encrypt"
     error_check "Enrolling TPM failed"
 
     cryptsetup open --token-only "$device_to_encrypt" "$luks_label"
     error_check "Couldn't decrypt $device_to_encrypt"
-    echo "n" | e2fsck -f -p "/dev/mapper/$luks_label"
-    resize2fs "/dev/mapper/$luks_label"
-    echo_tty "Successfully encrypted $device_to_encrypt"
+    echo "n" | e2fsck -f -p "/dev/mapper/$luks_label" >/dev/null
+    resize2fs "/dev/mapper/$luks_label" >/dev/null
+    echo "Successfully encrypted $device_to_encrypt"
 
     # shellcheck disable=SC3040
     set +o pipefail
@@ -153,7 +131,7 @@ encrypt_decrypt_run() {
         # shellcheck disable=SC2154
         for decrypt in $(echo "$bootparam_rd_luks_encrypt" | tr ',' '\n'); do
             if ! decrypt_device=$(parse_bootparam_to_device "$decrypt"); then
-                echo_tty "$decrypt_device doesn't exist or isn't block device"
+                echo "$decrypt_device doesn't exist or isn't block device"
                 continue
             fi
             luks_label="luks_$(lsblk -no PARTLABEL "$decrypt_device")"
@@ -162,7 +140,7 @@ encrypt_decrypt_run() {
                 continue
             fi
             if ! cryptsetup open "$decrypt_device" "$luks_label"; then
-                echo_tty "Couldn't decrypt $decrypt_device"
+                echo "Couldn't decrypt $decrypt_device"
             fi
         done
         return 0
