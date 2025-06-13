@@ -104,7 +104,7 @@ createUpdateSymlink() {
     # number is 2 then update partition is /dev/mmcblk0p3; if active partition
     # is rootfsb (/dev/mmcblk0p3) then update partition is /dev/mmcblk0p2
     _active_device=$(readlink -f $ROOTFS_SEARCH_PATH/$LABEL_ROOTFS_ACTIVE)
-    _test=$(echo $_active_device | grep -E '^/dev/[[:alnum:]]+[[:alpha:]][[:digit:]]+$')
+    _test=$(echo $_active_device | grep -Ee '^/dev/[[:alnum:]]+[[:alpha:]][[:digit:]]+$' -e '^/dev/dm-[[:digit:]]+$')
     if [ -z "${_test}" ]; then
         echo "Unexpected root device ${_active_device}"
         exit 1
@@ -112,16 +112,15 @@ createUpdateSymlink() {
     _active_part=$(echo $_active_device \
         | sed -E 's|^(/dev/[[:alnum:]]+[[:alpha:]])([[:digit:]]+)$|\2|')
     if [ "$LABEL_ROOTFS_ACTIVE" = "$LABEL_ROOTFS_A" ]; then
-        _update_part=$(($_active_part+1))
+        _update_part="$LABEL_ROOTFS_B"
     elif [ "$LABEL_ROOTFS_ACTIVE" = "$LABEL_ROOTFS_B" ]; then
-        _update_part=$(($_active_part-1))
+        _update_part="$LABEL_ROOTFS_A"
     else
         echo "Unexpected rootfs partition"
         exit 1
     fi
     _rdiff_update_device=$_active_device
-    _update_device=$(echo $_active_device \
-        | sed -E "s|^(/dev/[[:alnum:]]+[[:alpha:]])([[:digit:]]+)$|\1$_update_part|")
+    _update_device="/dev/disk/by-label/$_update_part"
 
     echo "Creating symlink for update purposes"
     if [ -L "$UPDATE_DEV_SYMLINK" ]; then

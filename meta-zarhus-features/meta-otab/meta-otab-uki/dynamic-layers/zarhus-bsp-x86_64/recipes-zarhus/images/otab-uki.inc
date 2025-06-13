@@ -4,7 +4,8 @@ BOOT_B_UUID = "${@generate_uuid_from_sha(d, 'boot_b')}"
 ROOT_B_UUID = "${@generate_uuid_from_sha(d, 'root_b')}"
 
 ROOTFS_LABEL = "${OTAB_LABEL_ROOTFS_A}"
-UKI_FILENAME = "zarhus_a.efi"
+# Use override as it has higher priority
+UKI_FILENAME:x86-64 = "zarhus_a.efi"
 UKI_FILENAME_B = "zarhus_b.efi"
 # should replace previous bootx64.efi with new one when copying
 IMAGE_BOOT_FILES_label-${OTAB_LABEL_BOOT_B}:append = " \
