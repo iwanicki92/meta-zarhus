@@ -2,7 +2,7 @@ SUMMARY = "Tools for measuring and analyzing memory usage of a process"
 DESCRIPTION = " \
     Tools that measure and plot the memory usage while running \
     a process. Useful for detecting memory leaks. \
-    "
+"
 HOMEPAGE = "https://docs.zarhus.com"
 
 LICENSE = "MIT"
@@ -12,7 +12,7 @@ SRC_URI = "\
     file://mem_usage \
     file://mem_test \
     file://plot_mem_usage.py \
-    "
+"
 
 S = "${WORKDIR}"
 
@@ -27,6 +27,6 @@ FILES:${PN} += " \
     ${bindir}/mem_usage \
     ${bindir}/mem_test \
     ${bindir}/plot_mem_usage.py \
-    "
+"
 
 RDEPENDS:${PN} += "bash python3 python3-matplotlib python3-numpy"

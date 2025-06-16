@@ -30,9 +30,9 @@ do_install() {
 }
 
 PACKAGES =+ " \
-             ${PN}-bcm4345c5 \
-             ${PN}-bcm43456 \
-             "
+    ${PN}-bcm4345c5 \
+    ${PN}-bcm43456 \
+"
 
 FILES:${PN}-bcm4345c5 += "${nonarch_base_libdir}/firmware/brcm/BCM4345C5.hcd"
 FILES:${PN}-bcm43456 += "${nonarch_base_libdir}/firmware/brcm/brcmfmac43456-sdio.*"

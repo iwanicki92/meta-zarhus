@@ -4,8 +4,8 @@ LOAD_ADDR ?= "\$loadaddr"
 # mmc 1 partition 9
 DEVPART ?= "1:9"
 EXTRA_OEMAKE:append:rk3566 = " \
-        BL31=${DEPLOY_DIR_IMAGE}/bl31-rk3566.elf \
-        ROCKCHIP_TPL=${DEPLOY_DIR_IMAGE}/ddr-rk3566.bin \
+    BL31=${DEPLOY_DIR_IMAGE}/bl31-rk3566.elf \
+    ROCKCHIP_TPL=${DEPLOY_DIR_IMAGE}/ddr-rk3566.bin \
 "
 INIT_FIRMWARE_DEPENDS:rk3566 = " rockchip-rkbin:do_deploy"
 do_compile[depends] += "${INIT_FIRMWARE_DEPENDS}"
@@ -16,7 +16,7 @@ SRC_URI:append = " \
     file://rk3566-orangepi-cm4-base-u-boot.dtsi \
     file://rk3566-orangepi-cm4.dtsi \
     file://0001-vop2_support.patch \
-    "
+"
 SRC_URI:append:radxa-cm3 = " ${@bb.utils.contains('DISTRO_FEATURES', 'splash', 'file://enable-hdmi.cfg', '', d)}"
 
 do_configure:prepend() {
