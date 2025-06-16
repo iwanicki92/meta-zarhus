@@ -9,11 +9,11 @@ SRC_URI:append:dbg = " file://enable-ikconfig.cfg"
 SRC_URI:remove:dbg = " \
     file://disable-ikconfig.cfg \
     file://disable-debug.cfg \
-    "
+"
 SRC_URI += " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'splash', '${SPLASH_SOURCE};name=logo;downloadfilename=${SPLASH_FILE}', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'splash', 'file://enable-logo.cfg', '', d)} \
-    "
+"
 SRC_URI[logo.sha256sum] = "2ba3358102e2bb27b5c2b21d06e47325aa8238fad629d67ac46b97d8c77ab470"
 
 python do_prepare_logo() {
