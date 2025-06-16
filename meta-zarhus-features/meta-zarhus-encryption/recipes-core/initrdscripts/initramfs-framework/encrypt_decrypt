@@ -111,9 +111,9 @@ encrypt_decrypt_enabled() {
 # - path to block device e.g. /dev/sda2
 # Script first checks if rootfs is encrypted. If it isn't then it encrypts
 # partitions in rd.luks.encrypt after that it encrypts rd.luks.rootfs.
-# If rootfs is encrypted then it first decrypts all partitions in
-# rd.luks.encrypt and then rd.luks.rootfs. Initramfs will try to continue
-# booting even if partitions in rd.luks.encrypt couldn't be decrypted
+# If rootfs is encrypted then it first decrypts rootfs and then all partitions
+# in rd.luks.encrypt. Initramfs will try to continue booting even if partitions
+# in rd.luks.encrypt couldn't be decrypted
 encrypt_decrypt_run() {
     if [ -z "$bootparam_rd_luks_rootfs" ]; then
         return 0;
