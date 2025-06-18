@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=e3fc50a88d0a364313df4b21ef20c29e"
 # nooelint: oelint.append.protvars.PV
 PV = "0.7.0"
 
-SRC_URI += "file://cukinia.conf"
+SRC_URI:append = " file://cukinia.conf"
 
 # nooelint: oelint.append.protvars.SRCREV
 SRCREV = "be56f653743cc0e68bef81ef35df7c50ff8919c4"
