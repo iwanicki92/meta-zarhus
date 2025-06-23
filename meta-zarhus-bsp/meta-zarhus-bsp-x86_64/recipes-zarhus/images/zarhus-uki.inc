@@ -1,4 +1,3 @@
-# nooelint: oelint.var.multiinherit
 inherit uki
 EFI_PROVIDER ?= ""
 IMAGE_EFI_BOOT_FILES = "${UKI_FILENAME};EFI/BOOT/bootx64.efi"
