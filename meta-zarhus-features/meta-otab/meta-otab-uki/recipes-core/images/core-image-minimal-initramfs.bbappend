@@ -1,1 +1,2 @@
-INITRAMFS_SCRIPTS:append = " initramfs-module-overlayroot"
+BAD_RECOMMENDATIONS += "initramfs-module-rootfs"
+INITRAMFS_SCRIPTS:append = " initramfs-module-rorootfs-overlay"

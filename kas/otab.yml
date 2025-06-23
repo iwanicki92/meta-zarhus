@@ -13,6 +13,11 @@ repos:
       meta-otab:
         repo: meta-zarhus
         path: meta-zarhus-features/meta-otab/patches/0001-swupdate-common-add-otab-shell-to-SWU-image.patch
+
+  meta-readonly-rootfs-overlay:
+    url: https://github.com/3mdeb/meta-readonly-rootfs-overlay.git
+    commit: 87aa849a1d8434e2e6aa95c9a50f546c847b3f86
+
   meta-zarhus:
     layers:
       meta-zarhus-features/meta-otab/meta-otab-common:
