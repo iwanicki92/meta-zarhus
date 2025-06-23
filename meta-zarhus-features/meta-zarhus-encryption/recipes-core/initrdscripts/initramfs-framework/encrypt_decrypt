@@ -13,11 +13,18 @@ error_check() {
     fi
 }
 
-# encrypt_device <device> [recovery_key]
-# generates new recovery password if one isn't provided and saves to temporary
-# recovery_key file so it can be used when encrypting more partitions
+# encrypt_device <device> [flags]
+# generates new recovery password if encrypting for the first time, otherwise
+# enrolls previous recovery key. flags can be set to no_reencrypt to encrypt
+# device without in-place re-encryption. It's faster but overwrites whole
+# filesystem
 encrypt_device() {
     device_to_encrypt="$1"
+    if [ "$2" = "no_reencrypt" ]; then
+        reencrypt=
+    else
+        reencrypt="y"
+    fi
 
     luks_label="luks_$(lsblk -no PARTLABEL "$device_to_encrypt")"
     # shellcheck disable=SC3040
@@ -25,19 +32,24 @@ encrypt_device() {
 
     echo "Preparing to encrypt $device_to_encrypt"
     umount "$device_to_encrypt" 2>/dev/null
-    device_size="$(lsblk -nbo SIZE "$device_to_encrypt")"
-    e2fsck -fp "$device_to_encrypt" >/dev/null
-    # reduce fs size to make space for LUKS2 header
-    resize2fs "$device_to_encrypt" "$(($device_size/1024/1024-32))M" -f >/dev/null
-    error_check "Failed to shrink filesystem"
-
+    if [ -n "$reencrypt" ]; then
+        device_size="$(lsblk -nbo SIZE "$device_to_encrypt")"
+        e2fsck -fp "$device_to_encrypt" >/dev/null
+        # reduce fs size to make space for LUKS2 header
+        resize2fs "$device_to_encrypt" "$(($device_size/1024/1024-32))M" -f >/dev/null
+        error_check "Failed to shrink filesystem"
+    fi
     echo "Encrypting $device_to_encrypt"
     key="tmp_key"
     dd if=/dev/urandom of="$key" bs=512 count=4 2>/dev/null
     chmod 600 "$key"
-    echo "YES" | cryptsetup reencrypt \
-        --encrypt --type luks2 --key-file "$key" \
-        --reduce-device-size 32M "$device_to_encrypt"
+    if [ -n "$reencrypt" ]; then
+        echo "YES" | cryptsetup reencrypt \
+            --encrypt --type luks2 --key-file "$key" \
+            --reduce-device-size 32M "$device_to_encrypt"
+    else
+        echo "YES" | cryptsetup luksFormat --type luks2 --key-file "$key" "$device_to_encrypt"
+    fi
     error_check "Encryption failed"
     cryptsetup config "$device_to_encrypt" --label "$luks_label"
 
@@ -73,8 +85,10 @@ EOF
 
     cryptsetup open --token-only "$device_to_encrypt" "$luks_label"
     error_check "Couldn't decrypt $device_to_encrypt"
-    echo "n" | e2fsck -f -p "/dev/mapper/$luks_label" >/dev/null
-    resize2fs "/dev/mapper/$luks_label" >/dev/null
+    if [ -n "$reencrypt" ]; then
+        echo "n" | e2fsck -f -p "/dev/mapper/$luks_label" >/dev/null
+        resize2fs "/dev/mapper/$luks_label" >/dev/null
+    fi
     echo "Successfully encrypted $device_to_encrypt"
 
     # shellcheck disable=SC3040
@@ -130,7 +144,8 @@ encrypt_decrypt_run() {
 
         # shellcheck disable=SC2154
         for decrypt in $(echo "$bootparam_rd_luks_encrypt" | tr ',' '\n'); do
-            if ! decrypt_device=$(parse_bootparam_to_device "$decrypt"); then
+            decrypt_part="$(echo "$decrypt" | cut -d'=' -f 1,2)"
+            if ! decrypt_device=$(parse_bootparam_to_device "$decrypt_part"); then
                 echo "$decrypt_device doesn't exist or isn't block device"
                 continue
             fi
@@ -148,16 +163,18 @@ encrypt_decrypt_run() {
 
     RECOVERY_KEY=
     for encrypt in $(echo "$bootparam_rd_luks_encrypt" | tr ',' '\n'); do
-        encrypt_device=$(parse_bootparam_to_device "$encrypt")
+        encrypt_part="$(echo "$encrypt" | cut -d'=' -f 1,2)"
+        encrypt_flag="$(echo "$encrypt" | cut -d'=' -f 3)"
+        encrypt_device=$(parse_bootparam_to_device "$encrypt_part")
         error_check "$encrypt_device doesn't exist or isn't block device"
         luks_label="luks_$(lsblk -no PARTLABEL "$encrypt_device")"
         # Let's encrypt rootfs at the end
         if [ "$rootfs_luks_label" = "$luks_label" ]; then
             continue
         fi
-        encrypt_device "$encrypt_device"
+        encrypt_device "$encrypt_device" "$encrypt_flag"
         error_check "Couldn't encrypt $encrypt_device."
     done
     encrypt_device "$rd_luks_rootfs"
-    error_check "Couldn't encrypt $encrypt_device."
+    error_check "Couldn't encrypt $rd_luks_rootfs."
 }
