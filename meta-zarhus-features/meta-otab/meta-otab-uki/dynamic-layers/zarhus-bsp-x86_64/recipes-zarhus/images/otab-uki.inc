@@ -3,6 +3,7 @@ ROOT_A_UUID = "${ROOT_UUID}"
 BOOT_B_UUID = "${@generate_uuid_from_sha(d, 'boot_b')}"
 ROOT_B_UUID = "${@generate_uuid_from_sha(d, 'root_b')}"
 
+BOOT_LABEL = "${OTAB_LABEL_BOOT_A}"
 ROOTFS_LABEL = "${OTAB_LABEL_ROOTFS_A}"
 # Use override as it has higher priority
 UKI_FILENAME:x86-64 = "zarhus_a.efi"
