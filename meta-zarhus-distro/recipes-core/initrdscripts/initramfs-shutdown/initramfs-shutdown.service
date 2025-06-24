@@ -1,0 +1,15 @@
+[Unit]
+Description=Restore /run/initramfs on shutdown
+After=local-fs.target boot.mount boot.automount
+Before=shutdown.target
+Wants=local-fs.target
+Conflicts=shutdown.target
+
+[Service]
+RemainAfterExit=yes
+Type=oneshot
+ExecStart=/bin/true
+ExecStop=/usr/lib/initramfs/initramfs-restore
+
+[Install]
+WantedBy=sysinit.target

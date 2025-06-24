@@ -1,0 +1,23 @@
+#!/bin/sh
+
+finish_enabled() {
+	return 0
+}
+
+finish_run() {
+    case "$ACTION" in
+    reboot | poweroff | halt)
+        $ACTION -f -n
+        msg "$ACTION failed!"
+        ;;
+    kexec)
+        kexec -e
+        msg "$ACTION failed!"
+        reboot -f -n
+        ;;
+    *)
+        msg "Shutdown called with argument '$ACTION'. Rebooting!"
+        reboot -f -n
+        ;;
+    esac
+}

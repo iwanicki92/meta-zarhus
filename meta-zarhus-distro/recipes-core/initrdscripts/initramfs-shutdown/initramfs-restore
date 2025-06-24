@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+set -o pipefail
+trap "cleanup" ERR
+trap 'echo "Received SIGTERM signal, ignoring!" >&2' TERM
+
+# shellcheck disable=SC2317
+cleanup() {
+    ret=$?
+    if [ -f /run/initramfs/shutdown ]; then
+        rm /run/initramfs/shutdown
+    fi
+    return "$ret"
+}
+
+INITRAMFS_EXTRACT_CMD="<INITRAMFS_EXTRACT_CMD>"
+
+mkdir -p /run/initramfs
+cd /run/initramfs
+
+_initrd=$(mktemp)
+eval "$INITRAMFS_EXTRACT_CMD" >"$_initrd" 2>/dev/null
+cpio -id --no-absolute-filenames --quiet >/dev/null 2>&1 <"$_initrd"
+exit 0
