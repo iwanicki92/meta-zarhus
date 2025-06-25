@@ -80,6 +80,9 @@ fatal() {
 }
 
 ACTION="$1"
+# it's set to 0 during shutdown which results in udevd failing to start. Set to
+# value seen during reboot.
+export WATCHDOG_USEC=60000000
 # Variables shared among modules
 MODULE_PRE_HOOKS=""  # functions to call before running each module
 MODULE_POST_HOOKS="" # functions to call after running each module
