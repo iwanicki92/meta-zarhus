@@ -150,8 +150,8 @@ encrypt_decrypt_run() {
                 continue
             fi
             luks_label="luks_$(lsblk -no PARTLABEL "$decrypt_device")"
-            # already decrypted
-            if cryptsetup status "$luks_label" >/dev/null; then
+            # skip already opened rootfs
+            if [ "$rootfs_luks_label" = "$luks_label" ]; then
                 continue
             fi
             if ! cryptsetup open "$decrypt_device" "$luks_label"; then
