@@ -14,7 +14,6 @@ RDEPENDS:initramfs-module-create-overlay-fs = " \
     util-linux-fdisk \
 "
 
-inherit otab_variables_postinstall
 OTAB_FILES_WITH_VARIABLES:append = " ${D}/init.d/08-create_overlay_fs"
 
 do_install:append () {
