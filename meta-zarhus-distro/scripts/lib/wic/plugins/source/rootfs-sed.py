@@ -13,7 +13,7 @@ class RootfsSedPlugin(RootfsPlugin):
     Apply sed on /etc/fstab before partition is prepared. Plugin accepts couple
     sourceparams:
     * sed_filter_var=<VAR>, where <VAR> is name of bitbake variable containing
-        sed filter string. <VAR> should also be added to VICVARS. Without this
+        sed filter string. <VAR> should also be added to WICVARS. Without this
         param rootfs-sed will act identically to rootfs plugin.
     * sed_filter_separator=<SEP> used if you want to pass multiple filters
         applied via "sed -e '<FILTER1>' [-e '<FILTER2>']...".
