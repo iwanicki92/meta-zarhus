@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2020 3mdeb Embedded Systems Consulting <contact@3mdeb.com>
+#
+# SPDX-License-Identifier: MIT
+#
+# Script is based on fw_printenv script from grub-mender-gtubenv:
+# https://github.com/mendersoftware/grub-mender-grubenv/blob/master/fw_printenv
+
+GRUB_EDITENV=`which grub-editenv 2>/dev/null`
+
+# If empty, something is wrong and no point in proceeding
+if [ -z "${GRUB_EDITENV}" ]; then
+    echo "Could not find a valid grub-editenv binary. Aborting..."
+    exit 1
+fi
+
+ENV_DIR=/boot/grub
+
+if [ ! -d "$ENV_DIR" ]; then
+    ENV_DIR=/boot/EFI/BOOT
+fi
+
+GRUBENV="$ENV_DIR/grubenv"
+
+# By default the script mimics the fw_printenv from U-Boot
+# fw_setenv is a symlink to the fw_printenv
+# if we use the symlink, use a different execution path to mimic the fw_setenv
+# from U-Boot
+if [ "`basename $0`" = "fw_setenv" ]; then
+    FW_SETENV=1
+else
+    FW_SETENV=0
+fi
+
+usage() {
+        cat <<EOF
+Usage `basename $0` [OPTION]
+         -h   print this help
+EOF
+}
+
+make_evalable() {
+    # Make string appropriate for eval'ing.
+    sed -e 's/'\''/'\'\\\\\'\''/g; s/\\\$/\\\$/g; s/=/='\''/; s/$/'\''/'
+}
+
+setenv() {
+    while [ -n "$1" ]; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+        shift
+    done
+
+    VARS="$1"
+    shift
+    for arg in "$@"; do
+        VARS="$VARS $arg"
+    done
+
+    if [ -z "$VARS" ]; then
+        echo "Must specify at least one variable assignment." 1>&2
+         exit 1
+    fi
+
+    # Split in newlines, not spaces.
+    IFS='
+'
+
+    # Make string appropriate for eval'ing.
+    VARS="`echo "$VARS" | sed -ne '/^#/n; s/  */=/; /=/!s/$/=/; p' | make_evalable`"
+
+    set -e
+    eval ${GRUB_EDITENV} $GRUBENV set $VARS
+}
+
+printenv() {
+    NO_ARGS=1
+    while [ -n "$1" ]; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 1
+                ;;
+            *)
+                NO_ARGS=0
+                break
+                ;;
+        esac
+    done
+
+    VARS="`${GRUB_EDITENV} $GRUBENV list`"
+    eval "`echo "$VARS" | make_evalable`"
+
+    if [ $NO_ARGS = 1 ]; then
+        echo "$VARS"
+    else
+        for var in "$@"; do
+            eval echo \"$var=\${$var}\"
+        done
+    fi
+}
+
+if [ $FW_SETENV = 1 ]; then
+    setenv "$@"
+else
+    printenv "$@"
+fi

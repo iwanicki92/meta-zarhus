@@ -1,0 +1,95 @@
+software =
+{
+	version = "@@DISTRO_VERSION@@";
+
+	hardware-compatibility: [ "1.0" ];
+
+	otab: {
+		a: {
+			scripts: (
+				{
+					filename = "otab-shell";
+					sha256 = "$swupdate_get_sha256(otab-shell)";
+					type = "shellscript";
+					data = "<OTAB_LABEL_ROOTFS_A>";
+				}
+			)
+			images: (
+				{
+					filename = "<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE>.enc";
+					sha256 = "$swupdate_get_sha256(<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE>.enc)";
+					type = "raw";
+					installed-directly = true;
+					compressed = "zlib";
+					device = "/otab-device";
+					encrypted = TRUE;
+				}
+			);
+			files: (
+				{
+					filename = "<OTAB_KERNEL_IMAGE_TYPE>-<MACHINE>.enc";
+					sha256 = "$swupdate_get_sha256(<OTAB_KERNEL_IMAGE_TYPE>-<MACHINE>.enc)";
+					path = "/boot/<OTAB_KERNEL_IMAGE_A>";
+					encrypted = TRUE;
+				}
+			);
+			bootenv: (
+				{
+					name = "otab_part_next";
+					value = "2";
+				},
+				{
+					name = "otab_part_default";
+					value = "3";
+				},
+				{
+					name = "otab_status";
+					value = "in_progress";
+				}
+				);
+		};
+		b: {
+			scripts: (
+				{
+					filename = "otab-shell";
+					sha256 = "$swupdate_get_sha256(otab-shell)";
+					type = "shellscript";
+					data = "<OTAB_LABEL_ROOTFS_B>";
+				}
+			)
+			images: (
+				{
+					filename = "<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE>.enc";
+					sha256 = "$swupdate_get_sha256(<OTAB_ROOTFS_IMAGE_NAME>-<MACHINE>.enc)";
+					type = "raw";
+					installed-directly = true;
+					compressed = "zlib";
+					device = "/otab-device";
+					encrypted = TRUE;
+				}
+			);
+			files: (
+				{
+					filename = "<OTAB_KERNEL_IMAGE_TYPE>-<MACHINE>.enc";
+					sha256 = "$swupdate_get_sha256(<OTAB_KERNEL_IMAGE_TYPE>-<MACHINE>.enc)";
+					path = "/boot/<OTAB_KERNEL_IMAGE_B>";
+					encrypted = TRUE;
+				}
+			);
+			bootenv: (
+				{
+					name = "otab_part_next";
+					value = "3";
+				},
+				{
+					name = "otab_part_default";
+					value = "2";
+				},
+				{
+					name = "otab_status";
+					value = "in_progress";
+				}
+			);
+		};
+	};
+}

@@ -1,0 +1,15 @@
+#!/bin/sh
+# shellcheck disable=SC3040
+# umount /oldroot and everything mounted there
+
+umount_enabled() {
+	return 0
+}
+
+umount_run() {
+    set -o pipefail
+    if ! mount | awk '{print $3}' | grep "/oldroot" | sort -r | xargs umount; then
+        fatal "Failed to umount /oldroot"
+    fi
+    set +o pipefail
+}

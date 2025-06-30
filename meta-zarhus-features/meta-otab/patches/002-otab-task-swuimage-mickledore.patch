@@ -1,0 +1,33 @@
+diff --git a/classes-recipe/swupdate-common.bbclass b/classes-recipe/swupdate-common.bbclass
+index d7139a31daad..400b2b92b0a2 100644
+--- a/classes-recipe/swupdate-common.bbclass
++++ b/classes-recipe/swupdate-common.bbclass
+@@ -301,14 +301,28 @@ def swupdate_create_cpio(d, swudeploydir, list_for_cpio):
+ python do_swuimage () {
+     import shutil
+ 
++    # Add sw-description and otab-shell files to the swu file from WORKDIR
+     list_for_cpio = ["sw-description"]
+     workdir = d.getVar('WORKDIR', True)
+     s = d.getVar('S', True)
+     imgdeploydir = d.getVar('SWUDEPLOYDIR', True)
+     shutil.copyfile(os.path.join(workdir, "sw-description"), os.path.join(s, "sw-description"))
++    shutil.copyfile(os.path.join(workdir, "otab-shell"), os.path.join(s, "otab-shell"))
++    list_for_cpio = ["sw-description", "otab-shell"]
+ 
+     if d.getVar('SWUPDATE_SIGNING', True):
+         list_for_cpio.append('sw-description.sig')
++        if (filename != 'sw-description') and (filename != 'otab-shell') and (os.path.isfile(local)):
++            encrypted = (d.getVarFlag("SWUPDATE_IMAGES_ENCRYPTED", filename, True) or "")
++            dst = os.path.join(s, "%s" % filename )
++            if encrypted == '1':
++                bb.note("Encryption requested for %s" %(filename))
++                if not key or not iv:
++                    bb.fatal("Encryption required, but no key found")
++                swupdate_encrypt_file(local, dst, key, iv)
++            else:
++                shutil.copyfile(local, dst)
++            list_for_cpio.append(filename)
+ 
+     # Add artifacts added via SRC_URI
+     if not d.getVar('INHIBIT_SWUPDATE_ADD_SRC_URI', True):

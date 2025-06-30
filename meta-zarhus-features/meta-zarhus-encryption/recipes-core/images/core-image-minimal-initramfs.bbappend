@@ -1,5 +1,1 @@
-INITRAMFS_SCRIPTS = " \
-    initramfs-framework-base \
-    initramfs-module-udev \
-    initramfs-module-encrypt-decrypt \
-"
+INITRAMFS_SCRIPTS:append = " initramfs-module-encrypt-decrypt"

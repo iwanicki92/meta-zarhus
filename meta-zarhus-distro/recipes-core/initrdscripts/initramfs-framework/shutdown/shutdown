@@ -1,0 +1,153 @@
+#!/bin/sh
+
+# Minimally modified copy of init script
+# Variable ACTION contains information whether we are shutting down or
+# rebooting
+
+# Provides the API to be used by the initramfs modules
+#
+# Modules need to provide the following functions:
+#
+# <module>_enabled : check if the module ought to run (return 1 to skip)
+# <module>_run     : do what is need
+#
+# Boot parameters are available on environment in the as:
+#
+# 'foo=value' as 'bootparam_foo=value'
+# 'foo' as 'bootparam_foo=true'
+# 'foo.bar[=value] as 'foo_bar=[value|true]'
+
+# Register a function to be called before running a module
+# The hook is called as:
+#   <function> pre <module>
+add_module_pre_hook() {
+	MODULE_PRE_HOOKS="$MODULE_PRE_HOOKS $1"
+}
+
+# Register a function to be called after running a module
+# The hook is called as:
+#   <function> post <module>
+add_module_post_hook() {
+	MODULE_POST_HOOKS="$MODULE_POST_HOOKS $1"
+}
+
+# Load kernel module
+load_kernel_module() {
+	if modprobe $1 >/dev/null 2>&1; then
+		info "Loaded module $1"
+	else
+		debug "Failed to load module $1"
+	fi
+}
+
+# Prints information
+msg() {
+	echo "$@" >/dev/console
+}
+
+# Prints information if verbose bootparam is used
+info() {
+	[ -n "$bootparam_verbose" ] && echo "$@" >/dev/console
+}
+
+# Prints information if debug bootparam is used
+debug() {
+	[ -n "$bootparam_debug" ] && echo "DEBUG: $@" >/dev/console
+}
+
+# Prints a message and start a endless loop
+# Force reboot if init_fatal_reboot bootparam is set
+fatal() {
+	echo $1 >/dev/console
+	echo >/dev/console
+
+    # taken from dracut-ng's shutdown.sh
+    case "$ACTION" in
+        reboot | poweroff | halt)
+            $ACTION -f -n
+            msg "$ACTION failed!"
+            ;;
+        kexec)
+            kexec -e
+            msg "$ACTION failed!"
+            reboot -f -n
+            ;;
+        *)
+            msg "Shutdown called with argument '$ACTION'. Rebooting!"
+            reboot -f -n
+            ;;
+    esac
+}
+
+ACTION="$1"
+# it's set to 0 during shutdown which results in udevd failing to start. Set to
+# value seen during reboot.
+export WATCHDOG_USEC=60000000
+# Variables shared among modules
+MODULE_PRE_HOOKS=""  # functions to call before running each module
+MODULE_POST_HOOKS="" # functions to call after running each module
+MODULES_DIR=/shutdown.d  # place to look for modules
+
+# populate bootparam environment
+for p in $(cat /proc/cmdline); do
+	if [ -n "$quoted" ]; then
+		value="$value $p"
+		if [ "$(echo $p | sed -e 's/\"$//')" != "$p" ]; then
+			eval "bootparam_${quoted}=${value}"
+			unset quoted
+		fi
+		continue
+	fi
+
+	opt=$(echo $p | cut -d'=' -f1)
+	opt=$(echo $opt | sed -e 'y/.-/__/')
+	if [ "$(echo $p | cut -d'=' -f1)" = "$p" ]; then
+		eval "bootparam_${opt}=true"
+	else
+		value="$(echo $p | cut -d'=' -f2-)"
+		if [ "$(echo $value | sed -e 's/^\"//')" != "$value" ]; then
+			quoted=${opt}
+			continue
+		fi
+		eval "bootparam_${opt}=\"${value}\""
+	fi
+done
+
+# Load and run modules
+for m in $MODULES_DIR/*; do
+	# Skip backup files
+	if [ "$(echo $m | sed -e 's/\~$//')" != "$m" ]; then
+		continue
+	fi
+
+	module=$(basename $m | cut -d'-' -f 2)
+	debug "Loading module $module"
+
+	# pre hooks
+	for h in $MODULE_PRE_HOOKS; do
+		debug "Calling module hook (pre): $h"
+		eval "$h pre $module"
+		debug "Finished module hook (pre): $h"
+	done
+
+	# process module
+	. $m
+
+	if ! eval "${module}_enabled"; then
+		debug "Skipping module $module"
+		continue
+	fi
+
+	debug "Running ${module}_run"
+	eval "${module}_run"
+
+	# post hooks
+	for h in $MODULE_POST_HOOKS; do
+		debug "Calling module hook (post): $h"
+		eval "$h post $module"
+		debug "Finished module hook (post): $h"
+	done
+done
+
+# Catch all
+fatal "ERROR: Initramfs failed to shutdown the system."

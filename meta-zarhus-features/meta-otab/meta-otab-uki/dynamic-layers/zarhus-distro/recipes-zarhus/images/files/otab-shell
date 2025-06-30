@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2020 3mdeb Embedded Systems Consulting <contact@3mdeb.com>
+#
+# SPDX-License-Identifier: MIT
+
+UPDATE_DEV_SYMLINK="/otab-device"
+
+do_preinst()
+{
+    echo "do_preinst"
+    exit 0
+}
+
+do_postinst()
+{
+    otab_label="$1"
+    echo "do_postinst"
+    if [ -z "$otab_label" ]; then
+        echo "OTAB_LABEL not given through the 'data' attribute in sw-description"
+        exit 1
+    fi
+
+    e2fsck -fp "$UPDATE_DEV_SYMLINK" >/dev/null 2>&1 && resize2fs "$UPDATE_DEV_SYMLINK" >/dev/null 2>&1
+
+    case "$otab_label" in
+    "<OTAB_LABEL_ROOTFS_A>")
+        next_boot="ZarhusOS A"
+        ;;
+    "<OTAB_LABEL_ROOTFS_B>")
+        next_boot="ZarhusOS B"
+        ;;
+    *)
+        echo "Unknown Label: $otab_label"
+        exit 1
+        ;;
+    esac
+
+    boot_num=$(efibootmgr | grep -om1 "Boot.* ${next_boot}" | sed -r 's/Boot([0-9]+).*/\1/')
+    if ! efibootmgr --bootnext "$boot_num" >/dev/null; then
+        echo "Failed to set $next_boot as next boot"
+        exit 1
+    fi
+
+    exit 0
+}
+
+case "$1" in
+preinst)
+    echo "call do_preinst"
+    do_preinst
+    ;;
+postinst)
+    # passed through the 'data = ' attribute in sw-description
+    echo "call do_postinst"
+    do_postinst "$2"
+    ;;
+*)
+    echo "default"
+    exit 1
+    ;;
+esac

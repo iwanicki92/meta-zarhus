@@ -1,0 +1,37 @@
+From a9818431e8d960630f5a332a0936b72c16d797f9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Micha=C5=82=20Iwanicki?= <michal.iwanicki@3mdeb.com>
+Date: Mon, 9 Jun 2025 17:45:46 +0200
+Subject: [PATCH] swupdate-common: add otab-shell to SWU image
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Upstream-Status: Inappropriate oe specific
+
+Signed-off-by: Michał Iwanicki <michal.iwanicki@3mdeb.com>
+---
+ classes-recipe/swupdate-common.bbclass | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/classes-recipe/swupdate-common.bbclass b/classes-recipe/swupdate-common.bbclass
+index 0367f812e28f..a0b96850db3f 100644
+--- a/classes-recipe/swupdate-common.bbclass
++++ b/classes-recipe/swupdate-common.bbclass
+@@ -318,11 +318,13 @@ def swupdate_create_cpio(d, swudeploydir, list_for_cpio):
+ python do_swuimage () {
+     import shutil
+ 
+-    list_for_cpio = ["sw-description"]
++    # Add sw-description and otab-shell files to the swu file from WORKDIR
++    list_for_cpio = ["sw-description", "otab-shell"]
+     workdir = d.getVar('WORKDIR')
+     s = d.getVar('S')
+     imgdeploydir = d.getVar('SWUDEPLOYDIR')
+     shutil.copyfile(os.path.join(workdir, "sw-description"), os.path.join(s, "sw-description"))
++    shutil.copyfile(os.path.join(workdir, "otab-shell"), os.path.join(s, "otab-shell"))
+ 
+     if d.getVar('SWUPDATE_SIGNING'):
+         list_for_cpio.append('sw-description.sig')
+-- 
+2.47.1
+

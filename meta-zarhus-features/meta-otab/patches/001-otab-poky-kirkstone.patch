@@ -1,0 +1,58 @@
+From 5dfae98aabc28cc69e13ed4d22edc9ebd070ad11 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tomasz=20=C5=BByjewski?= <tomasz.zyjewski@3mdeb.com>
+Date: Tue, 3 Oct 2023 09:10:44 +0200
+Subject: [PATCH] Preserve partition image in deploydir
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Move partition image to deploydir so it can be used with sw-description
+to create swu update image. Change the partition label to not used
+rootfsc so in case of interrupted update we did not end up with
+duplicated partition labels
+
+Signed-off-by: Tomasz Żyjewski <tomasz.zyjewski@3mdeb.com>
+---
+ meta/classes/image_types_wic.bbclass     | 11 ++++++++++-
+ scripts/lib/wic/plugins/imager/direct.py |  3 +--
+ 2 files changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/meta/classes/image_types_wic.bbclass b/meta/classes/image_types_wic.bbclass
+index e3863c88a9a4..d23a7225719c 100644
+--- a/meta/classes/image_types_wic.bbclass
++++ b/meta/classes/image_types_wic.bbclass
+@@ -65,7 +65,16 @@ IMAGE_CMD:wic () {
+ 		bbfatal "No kickstart files from WKS_FILES were found: ${WKS_FILES}. Please set WKS_FILE or WKS_FILES appropriately."
+ 	fi
+ 	BUILDDIR="${TOPDIR}" PSEUDO_UNLOAD=1 wic create "$wks" --vars "${STAGING_DIR}/${MACHINE}/imgdata/" -e "${IMAGE_BASENAME}" -o "$build_wic/" -w "$tmp_wic" ${WIC_CREATE_EXTRA_ARGS}
+-	mv "$build_wic/$(basename "${wks%.wks}")"*.direct "$out${IMAGE_NAME_SUFFIX}.wic"
++	wks_basename="$(basename "${wks%.wks}")"
++	mv "$build_wic/$wks_basename"*.direct "$out${IMAGE_NAME_SUFFIX}.wic"
++	for partition in "$build_wic/$wks_basename"*.direct.p2; do
++		partition_basename="$(basename "$partition")"
++		ext="${partition_basename##*.}"
++		e2label "$partition" "rootfsc"
++		gzip -f -9 -k "$partition"
++		partition_image_basename="${IMAGE_BASENAME}-${MACHINE}".direct."$ext"
++		mv "$partition".gz "${DEPLOY_DIR_IMAGE}/$partition_image_basename".gz
++	done
+ }
+ IMAGE_CMD:wic[vardepsexclude] = "WKS_FULL_PATH WKS_FILES TOPDIR"
+ do_image_wic[cleandirs] = "${WORKDIR}/build-wic"
+diff --git a/scripts/lib/wic/plugins/imager/direct.py b/scripts/lib/wic/plugins/imager/direct.py
+index e57fba9c12db..4ecbedbff5b3 100644
+--- a/scripts/lib/wic/plugins/imager/direct.py
++++ b/scripts/lib/wic/plugins/imager/direct.py
+@@ -266,8 +266,7 @@ class DirectPlugin(ImagerPlugin):
+                     return "/dev/%s%s%-d" % (part.disk, suffix, part.realnum)
+
+     def cleanup(self):
+-        if self._image:
+-            self._image.cleanup()
++        logger.info("Intentionally disabled removing partition images.")
+
+         # Move results to the output dir
+         if not os.path.exists(self.outdir):
+--
+2.41.0
+

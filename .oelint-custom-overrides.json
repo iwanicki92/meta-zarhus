@@ -1,7 +1,8 @@
 {
     "replacements": {
         "distros": [
-            "dbg"
+            "dbg",
+            "sunxi"
         ]
     }
 }

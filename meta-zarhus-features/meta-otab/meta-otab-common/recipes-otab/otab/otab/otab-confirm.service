@@ -1,0 +1,10 @@
+[Unit]
+SourcePath=/usr/sbin/otab
+Description=Confirm updated partition
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/otab confirm
+
+[Install]
+WantedBy=multi-user.target

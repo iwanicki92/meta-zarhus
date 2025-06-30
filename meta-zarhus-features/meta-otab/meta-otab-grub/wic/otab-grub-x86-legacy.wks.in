@@ -1,0 +1,5 @@
+part /boot --source bootimg-grub-legacy-otab --label ${OTAB_LABEL_BOOT}           --align 1024 --use-uuid --fixed-size ${OTAB_BOOT_PART_SIZE} --active
+part /     --source rootfs --fstype=ext4     --label ${OTAB_LABEL_ROOTFS_A}       --align 1024 --use-uuid --fixed-size ${OTAB_ROOTFS_PART_SIZE} ${OTAB_WIC_ROOTFS_EXTRA_ARGS}
+part       --source rootfs --fstype=ext4     --label ${OTAB_LABEL_ROOTFS_B}       --align 1024 --use-uuid --fixed-size ${OTAB_ROOTFS_PART_SIZE} ${OTAB_WIC_ROOTFS_EXTRA_ARGS}
+part                       --fstype=ext4     --label ${OTAB_LABEL_ROOTFS_OVERLAY} --align 1024 --use-uuid --fixed-size ${OTAB_ROOTFS_OVERLAY_PART_SIZE}
+part /data --source rootfs --fstype=ext4     --label ${OTAB_LABEL_DATA}           --align 1024 --use-uuid --fixed-size ${OTAB_DATA_PART_SIZE} --rootfs-dir=${IMAGE_ROOTFS}${OTAB_DATA_DIR}

@@ -1,0 +1,518 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2025 3mdeb <contact@3mdeb.com>
+#
+# SPDX-License-Identifier: MIT
+#
+# Copy of otab script from meta-otab-common with minor changes, mainly to do
+# with setting otab_part_current and changing boot order.
+
+# shellcheck source=../../../../meta-otab-common/recipes-otab/otab/otab/otab-variables
+. /usr/sbin/otab-variables
+
+# accept the OTAB_HEALTHCHECK program from environment first
+if [ -z "$OTAB_HEALTHCHECK" ]; then
+  # default value for the OTAB_HEALTHCHECK test program
+  OTAB_HEALTHCHECK=""
+fi
+
+printHelp() {
+	cat <<EOF
+
+Usage: $(basename "$0") command [filename]
+
+    Commands:
+        help                        print this help
+        confirm                     confirm current system as default
+        update SWU_FILE             update system using given SWU_FILE
+        delta-update SWU_FILE       update system using given SWU_FILE with
+                                    delta patch
+        polling OPT                 runs as a daemon, randomly polling for
+                                    updates within the time interval defined by
+                                    UPDATE_SLOT_START and UPDATE_SLOT_STOP
+                                    variables, update are downloaded from
+                                    bucket, can use prod or debug environment
+        poll-update OPT             check if new update is available on bucket
+                                    download and apply update, can use prod or
+                                    debug environment
+        check-update OPT            only check if new update is available on
+                                    bucket, can use prod or debug environment
+        rollback                    switches to the inactive root
+                                    partition
+
+    Examples:
+        $0 confirm
+        $0 update core-image-minimal-swu.swu
+        $0 delta-update core-image-minimal-v0.0.1-v0.0.2.swu
+        $0 polling prod
+        $0 poll-update prod
+        $0 check-update prod
+        $0 rollback
+
+EOF
+exit 1
+}
+
+errorCheck() {
+    _error_code="$?"
+    _error_msg="$1"
+    if [ "$_error_code" -ne 0  ]; then
+        echo "$_error_msg : $_error_code"
+        exit 1
+    fi
+}
+
+restartSystem() {
+  echo "Rebooting in 3..."
+  sleep 1
+  echo "Rebooting in 2..."
+  sleep 1
+  echo "Rebooting in 1..."
+  sleep 1
+  echo "Rebooting in 0..."
+  shutdown -r now
+}
+
+createUpdateSymlink() {
+    _root_rodevice=""
+    _cmdline=""
+    _update_device=""
+    _rdiff_update_device=""
+
+    # find out which label was given as root= in kernel cmdline
+    _cmdline=$(cat /proc/cmdline)
+    for arg in $_cmdline; do
+    	# Set optarg to option parameter, and '' if no parameter was
+    	# given
+        optarg=$(expr "x$arg" : 'x[^=]*=\(.*\)' || echo '')
+    	case $arg in
+            root=*)
+                _root_rodevice=$optarg ;;
+        esac
+    done
+
+    if [ -n "$_root_rodevice" ]; then
+        LABEL_ROOTFS_ACTIVE=$(echo "$_root_rodevice" | cut -d '=' -f 2)
+    else
+    	echo "root= not found in commandline"
+        exit 1
+    fi
+
+    # find out the device path to be updated; if active part is rootfsa then use
+    # the next partition to it; if active part is rootfsb then previous
+    # partitio; eg. if active partition is rootfsa (/dev/mmcblk0p2); partition
+    # number is 2 then update partition is /dev/mmcblk0p3; if active partition
+    # is rootfsb (/dev/mmcblk0p3) then update partition is /dev/mmcblk0p2
+    _active_device=$(readlink -f $ROOTFS_SEARCH_PATH/$LABEL_ROOTFS_ACTIVE)
+    _test=$(echo $_active_device | grep -Ee '^/dev/[[:alnum:]]+[[:alpha:]][[:digit:]]+$' -e '^/dev/dm-[[:digit:]]+$')
+    if [ -z "${_test}" ]; then
+        echo "Unexpected root device ${_active_device}"
+        exit 1
+    fi
+    _active_part=$(echo $_active_device \
+        | sed -E 's|^(/dev/[[:alnum:]]+[[:alpha:]])([[:digit:]]+)$|\2|')
+    if [ "$LABEL_ROOTFS_ACTIVE" = "$LABEL_ROOTFS_A" ]; then
+        _update_part="$LABEL_ROOTFS_B"
+    elif [ "$LABEL_ROOTFS_ACTIVE" = "$LABEL_ROOTFS_B" ]; then
+        _update_part="$LABEL_ROOTFS_A"
+    else
+        echo "Unexpected rootfs partition"
+        exit 1
+    fi
+    _rdiff_update_device=$_active_device
+    _update_device="/dev/disk/by-label/$_update_part"
+
+    echo "Creating symlink for update purposes"
+    if [ -L "$UPDATE_DEV_SYMLINK" ]; then
+        rm $UPDATE_DEV_SYMLINK
+    fi
+
+    ln -s "$_update_device" "$UPDATE_DEV_SYMLINK"
+
+    if [ "$COMMAND" = "delta-update" ]; then
+        # create symlink to the active partition, needed for delta-update
+        # process
+        echo "Creating symlink for delta update purposes"
+        if [ -L "$RDIFF_UPDATE_DEV_SYMLINK" ]; then
+            rm $RDIFF_UPDATE_DEV_SYMLINK
+        fi
+
+        ln -s "$_rdiff_update_device" "$RDIFF_UPDATE_DEV_SYMLINK"
+    fi
+}
+
+updateConfirm() {
+  # Set otab_part_current at first boot
+  current_boot=$(efibootmgr | sed -nr 's/BootCurrent: ([0-9]+)/\1/p')
+  current_part=$(efibootmgr | sed -rn "s/Boot${current_boot}\*? ZarhusOS (A|B).*/\1/p")
+  fw_setenv otab_part_current "${current_part}"
+
+  # at first, check if an update transaction is in progress
+  if fw_printenv otab_status | grep in_progress; then
+      _otab_part_current=$(fw_printenv otab_part_current | sed 's/.*\(.\)/\1/')
+
+      echo "Update transaction is in progress..."
+      echo "Checking for OTAB_HEALTHCHECK variable..."
+      if [ -n "$OTAB_HEALTHCHECK" ]; then
+        echo "OTAB_HEALTHCHECK found: $OTAB_HEALTHCHECK"
+        echo "Executing custom healthcheck: \"$OTAB_HEALTHCHECK\"..."
+        if ! $OTAB_HEALTHCHECK; then
+          echo "The custom healthcheck failed"
+          echo "The new OS will NOT get accepted"
+          restartSystem
+        fi
+        echo "Custom healthcheck succeeded"
+      else
+        echo "OTAB_HEALTHECK is empty. No additional healthcheck is performed."
+        echo "We will simply check whether the updated OS has booted correctly."
+      fi
+      echo "Confirming partition: \"$_otab_part_current\" as the default one..."
+
+      fw_setenv otab_part_default "$_otab_part_current"
+      current_bootorder="$(efibootmgr | sed -nr 's/BootOrder: (.*)/\1/p')"
+      efibootmgr -o "$current_boot,$current_bootorder" --remove-dups >/dev/null
+      fw_setenv otab_status "done"
+
+      echo "Success"
+  else
+    echo "No update transaction. Skipping confirmation."
+  fi
+}
+
+rollback() {
+  _otab_part_current=$(fw_printenv otab_part_current | sed -r 's/.*=(.*)/\1/')
+  _otab_part_next=""
+  _otab_status="in_progress"
+
+  echo "Switching active rootfs partition..."
+  if [ "$_otab_part_current" = "A" ]; then
+      _otab_part_next="B"
+  elif [ "$_otab_part_current" = "B" ]; then
+      _otab_part_next="A"
+  else
+    echo "Unexpected rootfs partition"
+    exit 1
+  fi
+
+  fw_setenv otab_status "$_otab_status"
+  boot_num="$(
+    efibootmgr | grep -om1 ".*ZarhusOS ${_otab_part_next}" | sed -r 's/Boot([[:xdigit:]]+).*/\1/'
+  )"
+  efibootmgr --bootnext "$boot_num" >/dev/null
+  fw_setenv otab_part_next "$_otab_part_next"
+
+  echo "Success"
+  echo "Partition: $_otab_part_next was selected as active for the next boot"
+  echo "If boot succeeds, it will be marked as the default one"
+  echo "Otherwise, we will go back to this one"
+
+}
+
+updatePerform() {
+    swu_args="${1}"
+    dwn_url="${2}"
+    pass_auth="${3}"
+    dwn_args="-u $dwn_url $pass_auth"
+    # add -v SWUpdate switch only if OTAB_VERBOSE was set
+    if [ "$OTAB_VERBOSE" = "true" ]; then
+      swu_args="-v ${swu_args}"
+    fi
+
+    # add -k SWUpdate switch only if OTAB_SIGNED_IMAGE was set
+    if [ "$OTAB_SIGNED_IMAGE" = "true" ]; then
+      swu_args="-k ${OTAB_KEYS_DIR}/${OTAB_SIG_CERT} ${swu_args}"
+    fi
+
+    # add -K SWUpdate switch only if OTAB_ENCRYPTED_IMAGE was set
+    if [ "$OTAB_ENCRYPTED_IMAGE" = "true" ]; then
+      swu_args="-K ${OTAB_KEYS_DIR}/${OTAB_ENC_KEY} ${swu_args}"
+    fi
+
+    createUpdateSymlink
+
+    echo "Partition $_update_part will be updated"
+    if [ "$LABEL_ROOTFS_ACTIVE" = "$LABEL_ROOTFS_A" ]; then
+        swu_args="-e otab,b ${swu_args}"
+    elif [ "$LABEL_ROOTFS_ACTIVE" = "$LABEL_ROOTFS_B" ]; then
+        swu_args="-e otab,a ${swu_args}"
+    else
+        echo "Unexpected rootfs partition"
+        exit 1
+    fi
+
+    # set otab_rootrwreset_next_boot env variable only if OTAB_RESET_OVERLAY
+    # was set, it will reset the overlay partition on next boot
+    if [ "$OTAB_RESET_OVERLAY" = "true" ]; then
+      fw_setenv otab_rootrwreset_next_boot yes
+    fi
+
+    if [ -n "${dwn_url}" ]; then
+        swupdate ${swu_args} -d "${dwn_args}"
+        errorCheck "Update failed"
+    else
+        swupdate ${swu_args}
+        errorCheck "Update failed"
+    fi
+
+
+    restartSystem
+}
+
+updateFromFile() {
+    swu_file="$1"
+    _curr_ver=""
+    _base_ver=""
+
+    if [ -z "$swu_file" ]; then
+        echo "SWU_FILE not given"
+        exit 1
+    fi
+
+    if [ ! -f "$swu_file" ]; then
+        echo "\"$swu_file\" does not exist"
+        exit 1
+    fi
+
+    if [ "$COMMAND" = "delta-update" ]; then
+        _curr_ver=v$(grep VERSION_ID /etc/os-release | cut -d "=" -f 2)
+        _base_ver=$(echo "$swu_file" | cut -d "-" -f 4)
+        # check of base version is needed here, the swupdate itself will not
+        # return an error when the update will be started with the delta file
+        # that was created from a different rootfs image than it is running
+        # right now on the system, but updating with wrong delta file will
+        # corrupt the rootfs and make it unbootable
+        if [ ! "$_base_ver" = "$_curr_ver" ]; then
+            echo "Base version of delta-update file does not match system version"
+            exit 1
+        fi
+    fi
+
+    updatePerform "-i ${swu_file}"
+}
+
+compareVersions() {
+    # return 1 if ver2 > ver1
+    # return 0 otherwise
+
+    ver1="$1"
+    ver2="$2"
+
+    IFS='.' read -r -a arr_ver1 <<< "$ver1"
+    IFS='.' read -r -a arr_ver2 <<< "$ver2"
+
+    if [ ${arr_ver2[0]} -lt ${arr_ver1[0]} ]; then
+        return 0
+    fi
+
+    if [ ${arr_ver2[0]} -gt ${arr_ver1[0]} ]; then
+        return 1
+    fi
+
+    if [ ${arr_ver2[0]} -eq ${arr_ver1[0]} ]; then
+        if [ ${arr_ver2[1]} -lt ${arr_ver1[1]} ]; then
+            return 0
+        fi
+
+        if [ ${arr_ver2[1]} -gt ${arr_ver1[1]} ]; then
+            return 1
+        fi
+
+        if [ ${arr_ver2[1]} -eq ${arr_ver1[1]} ]; then
+            if [ ${arr_ver2[2]} -lt ${arr_ver1[2]} ]; then
+                return 0
+            fi
+
+            if [ ${arr_ver2[2]} -gt ${arr_ver1[2]} ]; then
+              return 1
+            fi
+        fi
+    fi
+}
+
+checkPollServer() {
+    _serverUrl="$1"
+    _verFile="current-version.txt"
+    _latestUrl="$_serverUrl/$_verFile"
+    _tmpPath="/tmp"
+
+    if [ "$PASSWORD_PROTECTED" = "no" ]; then
+        wget -O "$_tmpPath/$_verFile" "$_latestUrl"
+        errorCheck "Failed to download $_latestUrl"
+    else
+        pushd "$_tmpPath" || errorCheck "Failed go to $_tmpPath"
+        curl -f -L -u $HTTP_USER:$HTTP_PASSWORD -O "$_latestUrl"
+        errorCheck "Failed to download $_latestUrl"
+        popd
+    fi
+
+    local _systemVer=$(cat /etc/os-release | grep VERSION_ID | cut -d '=' -f 2 | tr -d '"')
+    local _updateVer=$(cat "$_tmpPath/$_verFile" | grep -m1 VERSION | cut -d '=' -f 2 | tr -d '"')
+
+    compareVersions $_systemVer $_updateVer
+
+    local _return=$?
+
+    if [ "$_return" -eq 1 ]; then
+        echo "$_updateVer is greater than $_systemVer"
+        echo "Upgrade can be applied"
+    else
+        echo "$_updateVer is NOT greater than $_systemVer"
+        echo "Upgrade is not needed"
+    fi
+}
+
+pollServer() {
+    _serverUrl="$1"
+    _verFile="current-version.txt"
+    _latestUrl="$_serverUrl/$_verFile"
+    _tmpPath="/tmp"
+
+    if [[ "$PASSWORD_PROTECTED" == "no" ]]; then
+        wget -O "$_tmpPath/$_verFile" "$_latestUrl"
+        errorCheck "Failed to download $_latestUrl"
+    else
+        pushd "$_tmpPath" || errorCheck "Failed go to $_tmpPath"
+        curl -f -L -u $HTTP_USER:$HTTP_PASSWORD -O "$_latestUrl"
+        errorCheck "Failed to download $_latestUrl"
+        popd
+    fi
+
+    _systemVer=$(cat /etc/os-release | grep VERSION_ID | cut -d '=' -f 2 | tr -d '"')
+    _updateVer=$(cat "$_tmpPath/$_verFile" | grep -m1 VERSION | cut -d '=' -f 2 | tr -d '"')
+
+    compareVersions $_systemVer $_updateVer
+
+    _return=$?
+
+    if [ "$_return" -eq 1 ]; then
+        _swuFile=""
+        _baseSwuFile=$(cat "$_tmpPath/$_verFile" | grep -m1 FILE | cut -d '=' -f 2 | tr -d '"')
+        if [[ "$_baseSwuFile" =~ "delta-patch" ]]; then
+            _swuFile="$_baseSwuFile-v$_systemVer-v$_updateVer.swu"
+        else
+            _swuFile="$_baseSwuFile"
+        fi
+        _swuUrl="$_serverUrl/$_swuFile"
+
+        echo "$_updateVer is greater than $_systemVer"
+        echo "Download and apply update file"
+
+        if [[ "$PASSWORD_PROTECTED" == "no" ]]; then
+            updatePerform " " "$_swuUrl"
+        else
+            updatePerform " " "$_swuUrl" "-a $HTTP_USER:$HTTP_PASSWORD"
+        fi
+    else
+        echo "$_updateVer is NOT greater than $_systemVer"
+        echo "Upgrade is not needed"
+    fi
+}
+
+pollingLoop() {
+    _serverUrl="$1"
+    _timeStart=$(date --date="$UPDATE_SLOT_START" +%s)
+    _timeStop=$(date --date="$UPDATE_SLOT_STOP" +%s)
+    _timeNow=""
+    _daysSinceEpoch=0
+    _rand=""
+    _canUpdate=0
+    _updateDay=0
+
+    while :
+    do
+        _timeNow=$(date +%s)
+        # Check for updates every $UPDATE_DAYS days
+        _daysSinceEpoch=$(($_timeNow/$(expr 3600*24)))
+        _updateDay=$(($_daysSinceEpoch % $UPDATE_DAYS))
+        if [[ $_updateDay -eq 0 ]]; then
+            if [[ "$_timeNow" -gt "$_timeStart" && "$_timeNow" -lt "$_timeStop" ]]; then
+                if [ -z "$UPDATE_POLL_INTERVAL" ]; then
+                    _rand=$(( "$RANDOM" % $UPDATE_POLL_MAX ))
+                    echo "Update time slot is open. Update download will start in $_rand minutes"
+                    sleep "$_rand"m
+                else
+                    echo "Update time slot is open. Update download will start in $UPDATE_POLL_INTERVAL minutes"
+                    sleep "${UPDATE_POLL_INTERVAL}m"
+                fi
+                pollServer "$_serverUrl"
+            else
+                echo "Update time slot is NOT open. Checking again in $TIME_SLOT_CHECK_INTERVAL minutes"
+                sleep "${TIME_SLOT_CHECK_INTERVAL}m"
+            fi
+        else
+            echo "Update should not be executed on this day."
+            echo "Next update possibility will be checked in $(expr $UPDATE_DAYS - $_updateDay) days."
+            # Sleep until the end of the time slot
+            sleep $((_timeStop - _timeNow))
+        fi
+    done
+}
+
+COMMAND="$1"
+
+case "$COMMAND" in
+    "update")
+        SWU_FILE="$2"
+        updateFromFile $SWU_FILE
+        ;;
+    "delta-update")
+        SWU_FILE="$2"
+        updateFromFile $SWU_FILE
+        ;;
+    "confirm")
+        updateConfirm
+        ;;
+    "rollback")
+        rollback
+        ;;
+    # polling option only supports download update files from Google Cloud
+    # Storage with public links to files
+    "polling")
+        OPT="$2"
+        # BUCKET variable is project dependent and should be changed when
+        # applying to the target system
+        if [ "$OPT" = "debug" ]; then
+            BUCKET="$OTAB_BUCKET_DEBUG"
+        elif [ "$OPT" = "prod" ]; then
+            BUCKET="$OTAB_BUCKET_PROD"
+        else
+            echo "Wrong option provided, can be debug or prod. Given: $OPT"
+        fi
+        SERVER="$OTAB_SERVER_LINK/$BUCKET"
+        pollingLoop "$SERVER"
+        ;;
+    "poll-update")
+        OPT="$2"
+        # BUCKET variable is project dependent and should be changed when
+        # applying to the target system
+        if [ "$OPT" = "debug" ]; then
+            BUCKET="$OTAB_BUCKET_DEBUG"
+        elif [ "$OPT" = "prod" ]; then
+            BUCKET="$OTAB_BUCKET_PROD"
+        else
+            echo "Wrong option provided, can be debug or prod. Given: $OPT"
+        fi
+        SERVER="$OTAB_SERVER_LINK/$BUCKET"
+        pollServer "$SERVER"
+        ;;
+    "check-update")
+        OPT="$2"
+        # BUCKET variable is project dependent and should be changed when
+        # applying to the target system
+        if [ "$OPT" = "debug" ]; then
+            BUCKET="$OTAB_BUCKET_DEBUG"
+        elif [ "$OPT" = "prod" ]; then
+            BUCKET="$OTAB_BUCKET_PROD"
+        else
+            echo "Wrong option provided, can be debug or prod. Given: $OPT"
+        fi
+        SERVER="$OTAB_SERVER_LINK/$BUCKET"
+        checkPollServer "$SERVER"
+        ;;
+    "help")
+        printHelp
+        ;;
+    *)
+        echo "Invalid COMMAND: \"$COMMAND\""
+        printHelp
+esac

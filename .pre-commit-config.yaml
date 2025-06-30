@@ -50,7 +50,7 @@ repos:
         args: ["--severity=warning"]
 
   - repo: https://github.com/priv-kweihmann/oelint-adv
-    rev: 8.0.3
+    rev: 8.1.2
     hooks:
       - id: oelint-adv
         args: [--rulefile=.oelint-ruleset.json, --hide=info, --quiet, --fix, --constantmods=+.oelint-custom-overrides.json]
@@ -60,6 +60,10 @@ repos:
         language: python
         language_version: python3
         files: .*\.(bb)|(bbappend)|(bbclass)$
+        exclude: |
+          (?x)^(
+            .*/zarhus-swu-image.*\.bb
+          )$
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -71,7 +75,11 @@ repos:
     hooks:
       - id: namespell
         args: [--fix]
-        exclude: README.md
+        exclude: |
+          (?x)^(
+            README.md|
+            .*/layer.conf|
+          )$
 
 ci:
   autoupdate_commit_msg: 'pre-commit: autoupdate hooks'

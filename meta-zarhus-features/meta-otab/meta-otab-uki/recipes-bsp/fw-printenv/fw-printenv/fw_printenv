@@ -1,0 +1,128 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2025 3mdeb <contact@3mdeb.com>
+#
+# SPDX-License-Identifier: MIT
+
+set -e
+trap cleanup EXIT
+
+cleanup() {
+    error_code=$?
+    if [ $error_code != 0 ]; then
+        print_error "$(basename "$0") failed with code ${error_code}"
+    fi
+    if [ -d "${TEMP_DIR}" ]; then
+        rm -rf "${TEMP_DIR}"
+    fi
+    return $error_code
+}
+
+print_help() {
+    cat <<EOF
+fw_setenv [OPTION]... NAME VALUE
+fw_printenv [OPTION]... NAME [NAME]...
+
+Set or print selected variables. Variables are saved as EFI NVRAM variables.
+Options:
+  -g|--guid <GUID>          Change EFI variable GUID used when saving/printing variables
+  -v|--verbose              Enable trace output
+  -h|--help                 Print this help
+EOF
+}
+
+print_usage_error() {
+  print_help
+  error_exit "$1"
+}
+
+print_error() {
+  red='\033[31m'
+  reset='\033[0m'
+  printf "%bERROR: %s%b\n" "${red}" "$1" "${reset}"
+}
+
+error_exit() {
+  print_error "$1"
+  exit 1
+}
+
+parse_args() {
+  while [ $# -gt 0 ]; do
+    case $1 in
+        -v|--verbose)
+        set -x
+        shift
+    ;;
+        -h|--help)
+        print_help
+        exit 0
+    ;;
+        -g|--guid)
+        GUID="$2"
+        GUID_FORMAT="^[[:xdigit:]]{8}-([[:xdigit:]]{4}-){3}[[:xdigit:]]{12}$"
+        if ! printf '%s\n' "$GUID" | grep -Eq "$GUID_FORMAT"; then
+            print_usage_error "GUID has incorrect format, it should be xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        fi
+        shift 2
+        ;;
+    -*)
+        print_usage_error "Unknown option $1"
+        ;;
+    *)
+        if [ -n "$POSITIONAL_ARGS" ]; then
+            POSITIONAL_ARGS="$(printf '%s\n' "${POSITIONAL_ARGS}" "$1")"
+        else
+            POSITIONAL_ARGS="$(printf '%s\n' "$1")"
+        fi
+        shift
+        ;;
+    esac
+  done
+}
+
+setenv() {
+    lines="$(printf '%s\n' "$POSITIONAL_ARGS" | wc -l)"
+    if [ "$lines" -ne 2 ]; then
+        print_usage_error "setenv requires 2 values, name and value. Got $lines instead"
+    fi
+    name="$(printf '%s\n' "$POSITIONAL_ARGS" | head -1)"
+    value="$(printf '%s\n' "$POSITIONAL_ARGS" | tail -1)"
+    efi_var="${GUID}-${name}"
+    printf '%s' "$value" > "$TEMP_DIR/$efi_var"
+    efivar -f "$TEMP_DIR/$efi_var" -n "$efi_var" -w
+}
+
+printenv() {
+    if [ -z "$POSITIONAL_ARGS" ]; then
+        print_usage_error "printenv requires at least 1 argument"
+    fi
+    OLD_IFS="$IFS"
+    IFS='
+'
+    for name in $POSITIONAL_ARGS; do
+        # efivarfs name format is reversed compared to what efivar command uses
+        efi_var="/sys/firmware/efi/efivars/${name}-${GUID}"
+        # We skip first 4 bytes because of:
+        # https://docs.kernel.org/filesystems/efivarfs.html
+        echo "${name}=$(dd if="$efi_var" bs=1 skip=4 2>/dev/null)"
+    done
+    IFS="$OLD_IFS"
+}
+
+# Let's store every file needed here for easier cleanup
+TEMP_DIR=$(mktemp -d)
+# TODO: change to different GUID
+GUID="8be4df61-93ca-11d2-aa0d-00e098032b8d"
+POSITIONAL_ARGS=
+parse_args "$@"
+
+# By default the script mimics the fw_printenv from U-Boot
+# fw_setenv is a symlink to the fw_printenv
+# if we use the symlink, use a different execution path to mimic the fw_setenv
+# from U-Boot
+if [ "$(basename "$0")" = "fw_setenv" ]; then
+    setenv "$@"
+else
+    printenv "$@"
+fi

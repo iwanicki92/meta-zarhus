@@ -1,0 +1,27 @@
+#!/bin/sh
+# shellcheck disable=SC3040
+# Close all remaining luks partitions
+
+luks_close_enabled() {
+	return 0
+}
+
+# create rwoverlay partition on first boot.
+luks_close_run() {
+    set -o pipefail
+    error=
+    OLDIFS="$IFS"
+    IFS='
+'
+    for luks in $(dmsetup ls --target crypt | awk '{print $1}'); do
+        if ! cryptsetup close "$luks"; then
+            error="y"
+            echo "Couldn't close $luks"
+        fi
+    done
+    IFS="$OLDIFS"
+    if [ -n "$error" ]; then
+        fatal ""
+    fi
+    set +o pipefail
+}
