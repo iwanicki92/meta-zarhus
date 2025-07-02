@@ -1,0 +1,105 @@
+---
+name: CI on release & pre-release tag
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  prepare:
+    name: Read targets.json to create matrix build, prepare artifact dir
+    runs-on: nix-builder
+    container:
+      image: alpine/git
+      volumes:
+        - build_artifacts:/artifacts
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - run: apk add jq
+
+      - uses: zarhus/workflows/git-clone@v1
+        with:
+          path: meta-zarhus
+
+      - id: set-matrix
+        run: |
+          matrix="$(jq -c . < meta-zarhus/.github/workflows/release-targets.json)"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "$matrix"
+
+      - name: Prepare job dir
+        run: |
+          install -d -o 1000 -g 1000 /artifacts/${{ github.run_id }}-${{ github.run_attempt }}
+
+  build:
+    name: Build
+    needs: prepare
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    uses: zarhus/workflows/.github/workflows/kas-build.yml@v1
+    with:
+      runs-on: nix-builder
+      kas-config: ${{ matrix.release.config }}
+      machine: ${{ matrix.release.machine }}
+      artifacts: ${{ toJson(matrix.release.artifacts) }} # array
+      artifacts-dir: ${{ github.run_id }}-${{ github.run_attempt }}/artifacts
+      sstate-dir: ${{ github.run_id }}-${{ github.run_attempt }}/sstate-cache
+      dl-dir: ${{ github.run_id }}-${{ github.run_attempt }}/downloads
+
+  artifacts:
+    name: Prepare and release artifacts
+    needs: build
+    runs-on: nix-builder
+    container:
+      image: alpine/git
+      volumes:
+        - build_artifacts:/artifacts
+    permissions:
+      contents: write
+    env:
+      ARTIFACTS: /artifacts/${{ github.run_id }}-${{ github.run_attempt }}/artifacts
+    steps:
+      - run: apk add github-cli jq bash
+
+      - name: Create sha256sum for each artifact
+        run: |
+          cd "$ARTIFACTS"
+          ls -lh ./*
+          for artifact in ./*; do
+            sha256sum "$artifact" > "$artifact.sha256"
+          done
+
+      - uses: zarhus/workflows/git-clone@v1
+        with:
+          path: meta-zarhus
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cd meta-zarhus
+          TAG=${GITHUB_REF##*/}
+          case "$TAG" in
+            v*-rc*)
+              PRERELEASE="--prerelease"
+              ;;
+            *)
+              PRERELEASE=
+              ;;
+          esac
+          ./scripts/generate-release-notes.sh "$TAG" > notes.txt
+          gh release create --title "$TAG" --notes-file notes.txt --verify-tag $PRERELEASE "$TAG" "$ARTIFACTS"/*
+
+  cleanup:
+    name: Remove files created by workflow
+    needs: artifacts
+    if: always()
+    runs-on: nix-builder
+    container:
+      image: alpine/git
+      volumes:
+        - build_artifacts:/artifacts
+    steps:
+      - run: rm -rf /artifacts/${{ github.run_id }}-${{ github.run_attempt }} || true

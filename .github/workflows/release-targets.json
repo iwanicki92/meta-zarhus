@@ -1,0 +1,36 @@
+{
+    "release": [
+        {
+            "machine": "genericx86-64",
+            "config": "meta-zarhus/kas/common.yml:meta-zarhus/kas/hardening.yml:meta-zarhus/kas/x86_64.yml",
+            "artifacts": [
+                "zarhus-base-image-genericx86-64.rootfs.wic.gz",
+                "zarhus-base-image-genericx86-64.rootfs.wic.bmap"
+            ]
+        },
+        {
+            "machine": "radxa-cm3",
+            "config": "meta-zarhus/kas/common.yml:meta-zarhus/kas/hardening.yml:meta-zarhus/kas/rockchip.yml",
+            "artifacts": [
+                "zarhus-base-image-radxa-cm3.rootfs.wic.gz",
+                "zarhus-base-image-radxa-cm3.rootfs.wic.bmap"
+            ]
+        },
+        {
+            "machine": "quartz64-a",
+            "config": "meta-zarhus/kas/common.yml:meta-zarhus/kas/hardening.yml:meta-zarhus/kas/rockchip.yml",
+            "artifacts": [
+                "zarhus-base-image-quartz64-a.rootfs.wic.gz",
+                "zarhus-base-image-quartz64-a.rootfs.wic.bmap"
+            ]
+        },
+        {
+            "machine": "raspberrypi4-64",
+            "config": "meta-zarhus/kas/common.yml:meta-zarhus/kas/hardening.yml:meta-zarhus/kas/rpi.yml",
+            "artifacts": [
+                "zarhus-base-image-raspberrypi4-64.rootfs.wic.gz",
+                "zarhus-base-image-raspberrypi4-64.rootfs.wic.bmap"
+            ]
+        }
+    ]
+}
