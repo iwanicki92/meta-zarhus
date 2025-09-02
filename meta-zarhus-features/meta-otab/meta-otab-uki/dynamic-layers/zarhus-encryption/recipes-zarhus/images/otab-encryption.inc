@@ -26,6 +26,7 @@ def get_second_cmdline(d):
     return " ".join(cmdline.split())
 
 # Modified copy with added shrinking of partition by 32 MB before gzipping.
+# nooelint: oelint.vars.spacesassignment
 do_deploy_partitions() {
     part_dir="${WORKDIR}/build-wic"
     for partition in "$part_dir"/*.direct.p*; do
