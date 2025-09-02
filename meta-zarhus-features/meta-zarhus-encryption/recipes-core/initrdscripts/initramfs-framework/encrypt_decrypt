@@ -67,7 +67,7 @@ encrypt_device() {
         device_size="$(lsblk -nbo SIZE "$device_to_encrypt")"
         e2fsck -fp "$device_to_encrypt" >/dev/null
         # reduce fs size to make space for LUKS2 header
-        resize2fs "$device_to_encrypt" "$(($device_size/1024/1024-32))M" -f >/dev/null
+        resize2fs "$device_to_encrypt" "$(($device_size/1024/1024-32))M" -f >/dev/null 2>&1
         error_check "Failed to shrink filesystem"
     fi
     echo "Encrypting $device_to_encrypt"
@@ -85,7 +85,7 @@ encrypt_device() {
     error_check "Couldn't decrypt $device_to_encrypt"
     if [ -n "$reencrypt" ]; then
         echo "n" | e2fsck -f -p "/dev/mapper/$luks_label" >/dev/null
-        resize2fs "/dev/mapper/$luks_label" >/dev/null
+        resize2fs "/dev/mapper/$luks_label" >/dev/null 2>&1
     fi
     echo "Successfully encrypted $device_to_encrypt"
 

@@ -24,7 +24,7 @@ create_overlay_run() {
     echo "Creating <OTAB_LABEL_ROOTFS_OVERLAY> partition"
 # 1st - create new partition, use recommended values
 # 2nd - set partlabel of last (default) partition to <OTAB_LABEL_ROOTFS_OVERLAY>
-    fdisk "/dev/$disk" <<EOF >/dev/null
+    fdisk "/dev/$disk" <<EOF >/dev/null 2>&1
 n
 
 
