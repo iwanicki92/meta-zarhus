@@ -145,7 +145,7 @@ encrypt_decrypt_run() {
         if ! cryptsetup open --token-only "$rd_luks_rootfs" "$rootfs_luks_label" 2>/dev/null; then
             ask_for_password_no_verify >key
             password="--key-file=key"
-            cryptsetup open $password "$rd_luks_rootfs" "$rootfs_luks_label"
+            cryptsetup open $password "$rd_luks_rootfs" "$rootfs_luks_label" 2>/dev/null
         fi
         error_check "Couldn't decrypt $rd_luks_rootfs"
 
@@ -161,7 +161,7 @@ encrypt_decrypt_run() {
             if [ "$rootfs_luks_label" = "$luks_label" ]; then
                 continue
             fi
-            if ! cryptsetup open $password "$decrypt_device" "$luks_label"; then
+            if ! cryptsetup open $password "$decrypt_device" "$luks_label" 2>/dev/null; then
                 echo "Couldn't decrypt $decrypt_device"
             fi
         done
