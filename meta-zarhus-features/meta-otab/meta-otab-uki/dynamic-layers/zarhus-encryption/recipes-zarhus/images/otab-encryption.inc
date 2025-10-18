@@ -32,9 +32,13 @@ do_deploy_partitions() {
     for partition in "$part_dir"/*.direct.p*; do
         partition_basename="$(basename "$partition")"
         ext="${partition_basename##*.}"
+        # p<x>.gz
+        rootfs_ext="${OTAB_ROOTFS_A_IMAGE_FSTYPE##*.direct.}"
+        # p<x>
+        rootfs_ext=${rootfs_ext%.gz}
         for deploy_ext in ${DEPLOY_PARTITIONS}; do
             if [ "$deploy_ext" = "$ext" ]; then
-                if [ "$ext" = "p3" ] || [ "$ext" = "p4" ]; then
+                if [ "$ext" = "$rootfs_ext" ]; then
                     cp "${partition}" "${partition}-resized"
                     partition="${partition}-resized"
                     bbdebug 1 "shrinking ${partition} by 32 MB"
@@ -47,7 +51,7 @@ do_deploy_partitions() {
                 gzip --force --keep -9 "$partition"
                 partition_image_basename="${IMAGE_BASENAME}-${MACHINE}.direct.$ext"
                 mv "${partition}.gz" "${DEPLOY_DIR_IMAGE}/${partition_image_basename}.gz"
-                if [ "$ext" = "p3" ] || [ "$ext" = "p4" ]; then
+                if [ "$ext" = "$rootfs_ext" ]; then
                     rm "${partition}"
                 fi
                 break

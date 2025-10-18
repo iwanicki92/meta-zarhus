@@ -22,7 +22,7 @@ efibootmgr --disk "/dev/$DISK" \
            --bootnum "$current_bootnum"
 
 efibootmgr --disk "/dev/$DISK" \
-           --part 2 \
+           --part 3 \
            --create \
            --label "ZarhusOS B" \
            --loader '\EFI\BOOT\bootx64.efi' \
