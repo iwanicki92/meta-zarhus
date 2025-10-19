@@ -1,8 +1,15 @@
-BOOT_A_UUID = "${BOOT_UUID}"
-ROOT_A_UUID = "${ROOT_UUID}"
+BOOT_A_UUID = "${@generate_uuid_from_sha(d, 'BOOT_A_UUID')[:8]}"
+ROOT_A_UUID = "${@generate_uuid_from_sha(d, 'ROOT_A_UUID')}"
+BOOT_B_UUID = "${@generate_uuid_from_sha(d, 'BOOT_B_UUID')[:8]}"
+ROOT_B_UUID = "${@generate_uuid_from_sha(d, 'ROOT_B_UUID')}"
 
-BOOT_LABEL = "${OTAB_LABEL_BOOT_A}"
-ROOTFS_LABEL = "${OTAB_LABEL_ROOTFS_A}"
+# needed by otab-shell script during update
+IMAGE_INSTALL:append = " \
+    e2fsprogs-tune2fs \
+    mtools \
+    dosfstools \
+"
+
 # Use override as it has higher priority
 UKI_FILENAME:x86-64 = "zarhus_a.efi"
 

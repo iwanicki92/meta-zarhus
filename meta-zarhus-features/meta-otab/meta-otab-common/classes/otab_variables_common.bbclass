@@ -48,6 +48,16 @@ insert_otab_variables() {
       sed -e "s@<OTAB_UPDATE_POLL_INTERVAL>@${OTAB_UPDATE_POLL_INTERVAL}@g" -i ${file}
       sed -e "s@<OTAB_TIME_SLOT_CHECK_INTERVAL>@${OTAB_TIME_SLOT_CHECK_INTERVAL}@g" -i ${file}
       sed -e "s@<OTAB_UPDATE_POLL_MAX>@${OTAB_UPDATE_POLL_MAX}@g" -i ${file}
+      sed -e "s@<BOOT_UUID>@${BOOT_UUID}@g" -i "${file}"
+      sed -e "s@<ROOT_UUID>@${ROOT_UUID}@g" -i "${file}"
+      sed -e "s@<BOOT_A_UUID>@${BOOT_A_UUID}@g" -i "${file}"
+      sed -e "s@<BOOT_B_UUID>@${BOOT_B_UUID}@g" -i "${file}"
+      sed -e "s@<ROOT_A_UUID>@${ROOT_A_UUID}@g" -i "${file}"
+      sed -e "s@<ROOT_B_UUID>@${ROOT_B_UUID}@g" -i "${file}"
+      sed -e "s@<BOOT_TMP_UUID>@${BOOT_TMP_UUID}@g" -i "${file}"
+      sed -e "s@<ROOT_TMP_UUID>@${ROOT_TMP_UUID}@g" -i "${file}"
+      sed -e "s@<BOOT_TMP_LABEL>@${BOOT_TMP_LABEL}@g" -i "${file}"
+      sed -e "s@<ROOT_TMP_LABEL>@${ROOT_TMP_LABEL}@g" -i "${file}"
     fi
   done
 }
